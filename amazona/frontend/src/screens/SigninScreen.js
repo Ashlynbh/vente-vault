@@ -37,43 +37,42 @@ export default function SigninScreen() {
     }
   };
 
-useEffect(() => {
-  if (userInfo) {
-    // Check if the user is signing in as a brand, if they are a brand, and if they are approved
-    if (isBrand && userInfo.isBrand && userInfo.isBrandApproved) {
-      navigate('/admin/dashboard');
-    } else {
-      navigate(redirect);
+   useEffect(() => {
+    if (userInfo) {
+      if (isBrand && userInfo.isBrand && userInfo.isBrandApproved) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate(redirect);
+      }
     }
-  }
-}, [navigate, redirect, userInfo, isBrand]);
-
+  }, [navigate, redirect, userInfo]);
 
   return (
     <Container className="sign-in-container">
       <Helmet>
         <title>Sign In</title>
       </Helmet>
-      <h1 className="my-3">Sign In</h1>
+      <h1 className="sign-in-title">SIGN IN</h1>
       <Form onSubmit={submitHandler}>
         <Form.Group className="mb-3" controlId="email">
-          <Form.Label>Email</Form.Label>
           <Form.Control
             type="email"
             required
+            placeholder="EMAIL" 
             onChange={(e) => setEmail(e.target.value)}
           />
         </Form.Group>
         <Form.Group className="mb-3" controlId="password">
-          <Form.Label>Password</Form.Label>
           <Form.Control
             type="password"
+            placeholder="PASSWORD" 
             required
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
         <Form.Group className="mb-3" controlId="isBrandCheckbox">
           <Form.Check
+          className="sign-in-text"
             type="checkbox"
             label="Sign in as a brand"
             checked={isBrand}
@@ -83,14 +82,14 @@ useEffect(() => {
         <div className="mb-3">
           <Button className= "sign-in-button"type="submit">Sign In</Button>
         </div>
-        <div className="mb-3">
+        <div className="sign-in-text">
           New customer?{' '}
           <Link to={`/signup?redirect=${redirect}`}>Create your account</Link>
         </div>
-        <div className="mb-3">
+        <div className="sign-in-text">
           Forget Password? <Link to={`/forget-password`}>Reset Password</Link>
         </div>
-        <div className="mb-3">
+        <div className="sign-in-text">
           Interested in selling your products?{' '}
           <Link to={`/brand/expression-of-interest`}>Apply here</Link>
         </div>

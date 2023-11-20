@@ -131,6 +131,7 @@ function HomeScreen() {
                     </Row>
                 )}
             </div>
+
             <div>
                   <InstagramFeed />
             </div>

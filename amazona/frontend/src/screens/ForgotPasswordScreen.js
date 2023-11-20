@@ -35,22 +35,22 @@ export default function ForgotPasswordScreen() {
   return (
     <>
       <ToastContainer/>
-      <Container className="small-container">
+      <Container className="sign-in-container">
         <Helmet>
           <title>Forgot Password</title>
         </Helmet>
-        <h1 className="my-3">Forgot Password</h1>
+        <p>Lost your password? Please enter your email address. You will receive a link to create a new password via email.</p>
         <Form onSubmit={submitHandler}>
           <Form.Group className="mb-3" controlId="email">
-            <Form.Label>Email</Form.Label>
             <Form.Control
               type="email"
+              placeholder='EMAIL'
               required
               onChange={(e) => setEmail(e.target.value)}
             />
           </Form.Group>
           <div className="mb-3">
-            <Button type="submit">Submit</Button>
+            <Button className="sign-in-button"type="submit">Submit</Button>
           </div>
         </Form>
       </Container>

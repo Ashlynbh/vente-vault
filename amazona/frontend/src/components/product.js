@@ -29,23 +29,37 @@ function Product(props) {
     };
 
     return (
-        <Card>
+         <Card className="product-card">
             <Link to={`/product/${product.slug}`}>
                 <img src={product.image} className="card-img-top" alt={product.name} />
             </Link>
             <Card.Body className="product-detail">
                 <Link to={`/product/${product.slug}`}>
-                    <Card.Title>{product.name}</Card.Title>
+                <Card.Title>{product.name}</Card.Title>
                 </Link>
-                {/* <Rating rating={product.rating} numReviews={product.numReviews}></Rating> */}
-                <Card.Text>${product.price}</Card.Text>
+                {/* Display price or reduced price */}
+                {product.reducedPrice ? (
+                <div>
+                    <span className="product-price-small original-price" style={{ textDecoration: 'line-through' }}>
+                    ${product.price}
+                    </span>
+                    <span className="product-price-small reduced-price">
+                    ${product.reducedPrice}
+                    </span>
+                </div>
+                ) : (
+                <Card.Text className="product-price">${product.price}</Card.Text>
+                )}
+
+                {/* Stock availability */}
                 {product.countInStock === 0 && (
-                    <Button variant="light" disabled>
-                        Out of stock
-                    </Button>
+                <Button variant="light" disabled>
+                    Out of stock
+                </Button>
                 )}
             </Card.Body>
-        </Card>
+            </Card>
+
     );
 }
 
@@ -55,15 +69,27 @@ export function SimplifiedProduct(props) {
   const { product } = props;
   return (
     <Card className="product-cards">
-        <Link to={`/product/${product.slug}`}style={{textDecoration: 'none'}}>
-            <Card.Img src={product.image} alt={product.name} />
-            <Card.Body className="product-detail">
-                <Card.Title>{product.name}</Card.Title>
-                <Card.Text>${product.price}</Card.Text>
-            </Card.Body>
-        </Link>
+      <Link to={`/product/${product.slug}`} style={{ textDecoration: 'none' }}>
+        <Card.Img src={product.image} alt={product.name} />
+        <Card.Body className="product-detail">
+          <Card.Title>{product.name}</Card.Title>
+          {product.reducedPrice ? (
+            <div>
+              <span className="product-price-small original-price" style={{ textDecoration: 'line-through' }}>
+                ${product.price}
+              </span>
+              <span className="product-price-small reduced-price">
+                ${product.reducedPrice}
+              </span>
+            </div>
+          ) : (
+            <Card.Text className="product-price">${product.price}</Card.Text>
+          )}
+        </Card.Body>
+      </Link>
     </Card>
   );
 }
+
 
 export default Product;

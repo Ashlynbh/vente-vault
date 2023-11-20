@@ -50,8 +50,16 @@ export default function ShippingAddressScreen() {
         location: shippingAddress.location,
       })
     );
-    navigate('/payment');
+    navigate('/placeorder');
   };
+  useEffect(() => {
+  if (shippingAddress.location) {
+    // Assuming location is an object with lat and lng properties
+    console.log('Location updated:', shippingAddress.location);
+    // You can also set local states here if needed
+  }
+}, [shippingAddress.location]);
+
 
 
   useEffect(() => {
@@ -65,50 +73,54 @@ export default function ShippingAddressScreen() {
       </Helmet>
 
       <CheckoutSteps step1 step2></CheckoutSteps>
-      <div className="container small-container custom-padding-container">
-        <h1 className="my-3 checkout-titles">Shipping Address</h1>
+      <div className="sign-in-container">
         <Form onSubmit={submitHandler}>
           <Form.Group className="mb-3" controlId="fullName">
-            <Form.Label>Full Name</Form.Label>
             <Form.Control
+              className="shipping-form"
               value={fullName}
+              placeholder="FULL NAME"
               onChange={(e) => setFullName(e.target.value)}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3" controlId="address">
-            <Form.Label>Address</Form.Label>
             <Form.Control
+              className="shipping-form"
+              placeholder="ADDRESS"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3" controlId="city">
-            <Form.Label>City</Form.Label>
             <Form.Control
+              placeholder="CITY"
+              className="shipping-form"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3" controlId="postalCode">
-            <Form.Label>Postal Code</Form.Label>
             <Form.Control
+              className="shipping-form"
+              placeholder="POSTAL CODE"
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3" controlId="country">
-            <Form.Label>Country</Form.Label>
             <Form.Control
+              className="shipping-form"
+              placeholder="COUNTRY"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               required
             />
           </Form.Group>
-          <div className="mb-3">
+          {/* <div className="mb-3">
             <Button
               id="chooseOnMap"
               type="button"
@@ -125,7 +137,7 @@ export default function ShippingAddressScreen() {
             ) : (
               <div>No location</div>
             )}
-          </div>
+          </div> */}
 
           <div className="mb-3">
             <Button className="shipping"variant="primary" type="submit">

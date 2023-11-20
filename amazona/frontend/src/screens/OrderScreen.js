@@ -181,7 +181,7 @@ function onError(err) {
           type: 'resetOptions',
           value: {
             'client-id': clientId,
-            currency: 'USD',
+            currency: 'AUD',
           },
         });
         paypalDispatch({ type: 'setLoadingStatus', value: 'pending' });
@@ -198,6 +198,21 @@ function onError(err) {
     successPay,
     successDeliver,
   ]);
+
+
+    const handleStripePayment = async () => {
+      try {
+        const { data } = await axios.post('/api/orders/create-stripe-checkout-session', order, {
+          headers: { authorization: `Bearer ${userInfo.token}` },
+        });
+
+        window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
+      } catch (error) {
+        console.error('Error redirecting to Stripe checkout:', error);
+
+      }
+    };
+
 
   async function deliverOrderHandler() {
     try {
@@ -241,10 +256,11 @@ function onError(err) {
                     {order.shippingAddress.country}
                     {order.shippingAddress.location && order.shippingAddress.location.lat && (
                       <a
+                        className="order-map"
                         target="_new"
                         href={`https://maps.google.com?q=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}`}
                       >
-                        Show On Map
+                        View On Map
                       </a>
                     )}
                   </Card.Text>
@@ -274,34 +290,52 @@ function onError(err) {
               </Card>
 
               <Card className="mb-3">
-                <Card.Body>
-                  <Card.Title>Items</Card.Title>
-                  <ListGroup variant="flush">
-                    {order.orderItems.map((item) => (
-                      <ListGroup.Item key={item._id}>
-                        <Row className="align-items-center">
-                          <Col md={6}>
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="img-fluid rounded img-thumbnail"
-                            ></img>{' '}
-                            <Link to={`/product/${item.slug}`}>
-                              <span className="item-name">{item.name}</span>
-                              <span className="item-size">{item.size}</span>
-                              <span className="item-color">{item.color}</span>
-                            </Link>
-                          </Col>
-                          <Col md={3}>
-                            <span>{item.quantity}</span>
-                          </Col>
-                          <Col md={3}>${item.price}</Col>
-                        </Row>
-                      </ListGroup.Item>
-                    ))}
-                  </ListGroup>
-                </Card.Body>
+                  <Card.Body>
+                      <Card.Title>Items</Card.Title>
+                      <ListGroup variant="flush">
+                          {order.orderItems.map((item) => (
+                              <ListGroup.Item key={item._id}>
+                                  <Row className="align-items-center">
+                                      {/* Image and Name with more space */}
+                                      <Col xs={8} sm={6} md={6}>
+                                          <img
+                                              src={item.image}
+                                              alt={item.name}
+                                              className="img-fluid rounded img-thumbnail"
+                                              style={{ maxWidth: '75px', marginRight: '10px' }}
+                                          />
+                                          <Link to={`/product/${item.slug}`}>
+                                              <span className="item-name">{item.name}</span>
+                                              <span className="item-size">{item.size}</span>
+                                              <span className="item-color">{item.color}</span>
+                                          </Link>
+                                      </Col>
+
+                                      {/* Quantity */}
+                                      <Col xs={2} sm={3} md={3}>
+                                          <span>{item.quantity}</span>
+                                      </Col>
+
+                                      {/* Price */}
+                                      <Col xs={2} sm={3} md={3}>
+                                          {item.reducedPrice ? (
+                                            <div>
+                                              <span style={{ textDecoration: 'line-through' }}>${item.price}</span>
+                                              <span> ${item.reducedPrice}</span>
+                                            </div>
+                                          ) : (
+                                            <span>${item.price}</span>
+                                          )}
+                                      </Col>
+                                  </Row>
+                              </ListGroup.Item>
+                          ))}
+                      </ListGroup>
+                  </Card.Body>
               </Card>
+
+
+
             </Col>
             <Col md={4}>
               <Card className="mb-3">
@@ -360,16 +394,7 @@ function onError(err) {
                         {loadingPay && <LoadingBox></LoadingBox>}
                       </ListGroup.Item>
                     )}
-                    {userInfo.isAdmin && order.isPaid && !order.isDelivered && (
-                      <ListGroup.Item>
-                        {loadingDeliver && <LoadingBox></LoadingBox>}
-                        <div className="d-grid">
-                          <Button type="button" onClick={deliverOrderHandler}>
-                            Ship Order
-                          </Button>
-                        </div>
-                          </ListGroup.Item>
-                    )}
+                    
                   </ListGroup>
                 </Card.Body>
               </Card>

@@ -106,6 +106,24 @@ export default function UserListScreen() {
       }
     }
   };
+
+  const handleSendSubscriptionLink = async (user) => {
+  try {
+    // Call your backend endpoint to send the email
+    await axios.post('/api/users/send-subscription-link', {
+      userId: user._id,
+      userEmail: user.email,
+      userName:user.name
+    });
+    // Optionally, show a success message
+    toast.success('Subscription link sent successfully');
+  } catch (error) {
+    // Handle errors
+    toast.error('Error sending subscription link');
+  }
+};
+
+
   return (
     <div>
       <Helmet>
@@ -157,6 +175,7 @@ export default function UserListScreen() {
                   <td>
                     <Button
                       type="button"
+                      className='table-btn'
                       variant="light"
                       onClick={() => navigate(`/admin/user/${user._id}`)}
                     >
@@ -165,11 +184,23 @@ export default function UserListScreen() {
                     &nbsp;
                     <Button
                       type="button"
+                      className='table-btn'
                       variant="light"
                       onClick={() => deleteHandler(user)}
                     >
                       Delete
                     </Button>
+                     {/* Existing buttons */}
+                      {user.isBrand  && (
+                        <Button
+                        className='subscription-btn'
+                          type="button"
+                          variant="info"
+                          onClick={() => handleSendSubscriptionLink(user)}
+                        >
+                          Send Link
+                        </Button>
+                      )}
                   </td>
                 </tr>
               ))}

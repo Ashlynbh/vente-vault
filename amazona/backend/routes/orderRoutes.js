@@ -64,7 +64,11 @@ orderRouter.post(
     const brandDeliveries = Object.values(brandDeliveriesMap);
 
     const newOrder = new Order({
-      orderItems: req.body.orderItems.map((x) => ({ ...x, product: x._id })),
+      orderItems: req.body.orderItems.map((x) => ({
+        ...x,
+        product: x._id,
+        price: x.reducedPrice ? x.reducedPrice : x.price // Update the price field
+      })),
       shippingAddress: req.body.shippingAddress,
       paymentMethod: req.body.paymentMethod,
       itemsPrice: req.body.itemsPrice,
@@ -531,4 +535,7 @@ orderRouter.delete(
     }
   })
 );
+
+
+
 export default orderRouter;

@@ -46,12 +46,19 @@ export default function PlaceOrderScreen() {
 });
 
 
+
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { cart, userInfo } = state;
   const round2 = (num) => Math.round(num * 100 + Number.EPSILON) / 100; // 123.2345 => 123.23
   cart.itemsPrice = round2(
-    cart.cartItems.reduce((a, c) => a + c.quantity * c.price, 0)
-  );
+  cart.cartItems.reduce((a, c) => {
+    // Use reducedPrice if it exists, otherwise use the regular price
+    const price = c.reducedPrice ? c.reducedPrice : c.price;
+    return a + c.quantity * price;
+  }, 0)
+);
+
+
 
   // Set shipping and tax prices to zero
   cart.shippingPrice = 0;
@@ -60,10 +67,25 @@ export default function PlaceOrderScreen() {
   // Total price is just the items price since shipping and tax are zero
   cart.totalPrice = cart.itemsPrice;
 
+  useEffect(() => {
+    // Check if the payment method is not set and then set it to PayPal
+    if (!cart.paymentMethod) {
+      ctxDispatch({ type: 'SAVE_PAYMENT_METHOD', payload: 'PayPal' });
+      // You might also need to update the cart object directly, but it's better to do it through a proper dispatch or state update function
+    }
+  }, [cart, ctxDispatch]); //
+
 
   const placeOrderHandler = async () => {
     try {
       dispatch({ type: 'CREATE_REQUEST' });
+
+        // Map through cart items and use reducedPrice if available
+      const orderItems = cart.cartItems.map(item => ({
+        ...item,
+        price: item.reducedPrice ? item.reducedPrice : item.price,
+      }));
+
 
       const { data } = await Axios.post(
         '/api/orders',
@@ -144,7 +166,6 @@ const discountedTotal = cart.totalPrice - discountAmount;
         <Helmet>
           <title>Preview Order</title>
         </Helmet>
-        <h1 className="custom-heading">Preview Order</h1>
         <Row>
           <Col md={8}>
             <Card className="mb-3">
@@ -160,42 +181,49 @@ const discountedTotal = cart.totalPrice - discountAmount;
               </Card.Body>
             </Card>
 
-            <Card className="mb-3">
-              <Card.Body>
-                <Card.Title>Payment</Card.Title>
-                <Card.Text>
-                  <strong>Method:</strong> {cart.paymentMethod}
-                </Card.Text>
-                <Link to="/payment">Edit</Link>
-              </Card.Body>
-            </Card>
-
-            <Card className="mb-3">
-              <Card.Body>
-                <Card.Title>Items</Card.Title>
-                <ListGroup variant="flush">
+        <Card className="mb-3">
+          <Card.Body>
+              <Card.Title>Items</Card.Title>
+              <ListGroup variant="flush">
                   {cart.cartItems.map((item) => (
-                    <ListGroup.Item key={item._id}>
-                      <Row className="align-items-center">
-                        <Col md={6}>
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="img-fluid rounded img-thumbnail"
-                          ></img>{' '}
-                          <Link to={`/product/${item.slug}`} className="custom-link">{item.name}</Link>
-                        </Col>
-                        <Col md={3}>
-                          <span>{item.quantity}</span>
-                        </Col>
-                        <Col md={3}>${item.price}</Col>
-                      </Row>
-                    </ListGroup.Item>
+                      <ListGroup.Item key={item._id}>
+                          <Row className="align-items-center">
+                              {/* Image and Name with more space */}
+                              <Col xs={6} sm={4} md={6}>
+                                  <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="img-fluid rounded img-thumbnail"
+                                      style={{ maxWidth: '75px', marginRight: '10px' }} // Increased maxWidth for the image
+                                  />
+                                  <Link to={`/product/${item.slug}`} className="custom-link">{item.name}</Link>
+                              </Col>
+
+                              {/* Quantity */}
+                              <Col xs={3} sm={4} md={3}>
+                                  <span>{item.quantity}</span>
+                              </Col>
+
+                              {/* Price */}
+                              <Col xs={3} sm={4} md={3}>
+                                  {item.reducedPrice ? (
+                                    <div>
+                                      <span style={{ textDecoration: 'line-through' }}>${item.price}</span>
+                                      <span> ${item.reducedPrice}</span>
+                                      
+                                    </div>
+                                  ) : (
+                                    <span>${item.price}</span>
+                                  )}
+                              </Col>
+                          </Row>
+                      </ListGroup.Item>
                   ))}
-                </ListGroup>
-                <Link to="/cart">Edit</Link>
-              </Card.Body>
-            </Card>
+              </ListGroup>
+              <Link to="/cart">Edit</Link>
+          </Card.Body>
+      </Card>
+
           </Col>
           <Col md={4}>
             <Card>
@@ -215,10 +243,10 @@ const discountedTotal = cart.totalPrice - discountAmount;
                     </Row>
                   </ListGroup.Item>
                   <ListGroup.Item>
-                    <Row>
+                    {/* <Row>
                       <Col>Tax</Col>
                       <Col>${cart.taxPrice.toFixed(2)}</Col>
-                    </Row>
+                    </Row> */}
                   </ListGroup.Item>
                   <ListGroup.Item>
                       <Row>

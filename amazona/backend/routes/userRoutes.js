@@ -249,6 +249,60 @@ userRouter.post('/use-discount', isAuth, async (req, res) => {
 });
 
 
+const sendBrandApprovalEmail = async (name, email, subscriptionLink) => {
+  const mailjet = await initializeMailjet();
+
+  const request = mailjet.post('send', { version: 'v3.1' }).request({
+    Messages: [
+      {
+        From: {
+          Email: process.env.MAILJET_FROM_EMAIL,
+          Name: process.env.MAILJET_FROM_NAME,
+        },
+        To: [
+          {
+            Email: email,
+            Name: name
+          }
+        ],
+        Subject: 'Welcome to Our Brand Membership',
+        TextPart: 'Brand Membership Approval',
+        HTMLPart: `
+          <h3>Hi ${name},</h3>
+          <p>We are excited to inform you that you have been accepted as an approved brand member! This is a significant first step in partnering with us.</p>
+          <p>Please follow <a href="${subscriptionLink}">this link</a> to apply for our subscription services. Once your subscription is active, you will be able to log in and start selling on our platform.</p>
+          <p>Welcome aboard,</p>
+          <p><b>Vente Vault</b></p>
+        `
+      }
+    ]
+  });
+  
+  return request.then((result) => {
+    console.log(result.body);
+  }).catch((err) => {
+    console.error(err.statusCode);
+  });
+};
+
+
+userRouter.post('/send-subscription-link', async (req, res) => {
+  console.log("Request body:", req.body);
+  try {
+    const { userId, userEmail,userName } = req.body;
+    // Use your static Stripe link
+    const subscriptionLink = `https://buy.stripe.com/test_14kaHy8QX6C242AaEE`;
+
+    await sendBrandApprovalEmail(userName, userEmail, subscriptionLink);
+    res.json({ message: 'Email sent successfully' });
+  } catch (error) {
+    console.error("Error details:", error); // Log the complete error object
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+});
+
+
+
 
 
 userRouter.post(
@@ -460,24 +514,27 @@ userRouter.post('/expression-of-interest', async (req, res) => {
 
 
 
-userRouter.post(
-  '/signup',
-  expressAsyncHandler(async (req, res) => {
-    const newUser = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: bcrypt.hashSync(req.body.password),
-    });
-    const user = await newUser.save();
-    res.send({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      token: generateToken(user),
-    });
-  })
-);
+userRouter.post('/signup', expressAsyncHandler(async (req, res) => {
+  const existingUser = await User.findOne({ email: req.body.email });
+  if (existingUser) {
+    res.status(409).send({ message: 'Email already connected to an account' });
+    return;
+  }
+
+  const newUser = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password),
+  });
+  const user = await newUser.save();
+  res.send({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
+    token: generateToken(user),
+  });
+}));
 
 
 

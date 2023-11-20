@@ -49,6 +49,7 @@ productRouter.post(
       sub_category: 'sample subcategory',
       description: 'sample description',
       price: 0,
+      reducedPrice: req.body.reducedPrice,
       rating: 0,
       numReviews: 0,
       // weight: 0, // Default weight
@@ -93,6 +94,7 @@ productRouter.put(
       product.name = req.body.name || product.name;
       product.slug = req.body.slug || product.slug;
       product.price = req.body.price || product.price;
+      product.reducedPrice = req.body.reducedPrice !== undefined ? req.body.reducedPrice : product.reducedPrice;
       product.image = req.body.image || product.image;
       product.images = req.body.images || product.images;
       product.category = req.body.category || product.category;
@@ -416,7 +418,7 @@ productRouter.delete(
   })
 );
 
-productRouter.get('/instagram/:instagramPostId', isAuth, async (req, res) => {
+productRouter.get('/instagram/:instagramPostId', async (req, res) => {
     const instagramPostId = req.params.instagramPostId;
     try {
         // Find products that have the given Instagram post ID in their instagramPostIds array

@@ -3,6 +3,9 @@ import express from 'express';
 import expressAsyncHandler from 'express-async-handler';
 import { isAuth, isAdmin,isAdminOrBrand} from '../utils.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const instagramRouter = express.Router();
 
@@ -102,15 +105,24 @@ instagramRouter.put('/instagram-post/:id', isAuth, isAdmin, async (req, res) => 
 
 instagramRouter.get('/fetch-instagram-posts', isAuth, isAdmin, async (req, res) => {
 
-    const accessToken = 'IGQWRON1hnN2tJQTZA3d1NWZAGpzSGdPaC13NEpKNW94bm1ndWY5STY1djhfdjhLOXJOZAGp0cUJwdm5sN1p0M2VoNWl6SDBJb1FEaHhub3NEZAmlBYnhCVFBPUUcweHB3QkIxQ3M4T1I3Tnc0RjliM0FveUdhRXBBNGMZD'; // Replace with your actual access token
+
+
+    const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN; 
     const fields = 'id,caption,media_type,media_url,permalink';
     const url = `https://graph.instagram.com/me/media?fields=${fields}&access_token=${accessToken}`;
 
     try {
-        const response = await axios.get(url);
-        const instagramData = response.data.data;
+    const response = await axios.get(url);
 
-        for (const post of instagramData) {
+    // Check if the response is valid
+    if (!response.data || !response.data.data) {
+        throw new Error('Invalid response from Instagram API');
+    }
+
+    const instagramData = response.data.data;
+
+    for (const post of instagramData) {
+        try {
             const existingPost = await InstagramPost.findOne({ postId: post.id });
             if (!existingPost) {
                 const newPost = new InstagramPost({
@@ -120,13 +132,17 @@ instagramRouter.get('/fetch-instagram-posts', isAuth, isAdmin, async (req, res) 
                 });
                 await newPost.save();
             }
+        } catch (postError) {
+            console.error('Error processing Instagram post:', postError);
+            // Optionally, decide how to handle individual post errors
         }
-
-        res.status(200).send({ message: 'Instagram posts fetched and saved successfully' });
-    } catch (error) {
-        console.error('Error fetching and saving Instagram posts:', error);
-        res.status(500).send({ message: 'Error in fetching and saving Instagram posts', error: error.message });
     }
+
+    res.status(200).send({ message: 'Instagram posts fetched and saved successfully' });
+} catch (error) {
+    console.error('Error fetching and saving Instagram posts:', error);
+    res.status(500).send({ message: 'Error in fetching and saving Instagram posts', error: error.message });
+}
 });
 
 

@@ -66,9 +66,9 @@ export default function InstagramFeed() {
     const fetchLinkedProducts = async (postId) => {
         try {
             const response = await axios.get(`/api/products/instagram/${postId}`, {
-                headers: {
-                     Authorization: `Bearer ${userInfo.token}`, // If authentication is require
-                }
+                // headers: {
+                //      Authorization: `Bearer ${userInfo.token}`, // If authentication is require
+                // }
             });
             return response.data; // Array of products linked to the Instagram post
         } catch (error) {
@@ -80,7 +80,7 @@ export default function InstagramFeed() {
 return (
             <div className="instagram-feed-container">
                 <div className="instagram-feed-heading">
-                    <h2>SHOP INSTAGRAM</h2>
+                    <h2 className="featured-header">SHOP INSTAGRAM</h2>
                     <p>Tag @ventevault for a chance to be featured.</p>
                 </div>
 

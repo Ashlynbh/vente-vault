@@ -47,12 +47,10 @@ export default function CartScreen() {
 
 
   return (
-    <div className="cart-div">
-    <div>
+    <div className="cart-container">  
       <Helmet>
         <title>Shopping Cart</title>
       </Helmet>
-      <h1 className="checkout-titles">Shopping Cart</h1>
       <Row>
         <Col md={8}>
           {cartItems.length === 0 ? (
@@ -63,23 +61,41 @@ export default function CartScreen() {
             <ListGroup>
               {cartItems.map((item) => (
                 <ListGroup.Item key={item._id}>
-                  <Row className="align-items-center">
-                    <Col md={5}>
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="img-fluid rounded img-thumbnail"
-                      ></img>{' '}
-                     
-                      <Link to={`/product/${item.slug}`}>
-                        <span className="item-name">{item.name}</span>
-                        <span className="item-size">{item.size}</span>
-                        <span className="item-color">{item.color}</span>
-                      </Link>
+ <Row className="align-items-start"> {/* Align items at the start */}
+    {/* Column for Image */}
+    <Col xs={6} md={6} lg={4}>
+        <img
+            src={item.image}
+            alt={item.name}
+            className="img-fluid rounded img-thumbnail"
+            style={{ maxWidth: '100%' }}
+        />
+            </Col>
+            {/* Column for Details */}
+            <Col md={6} lg={8}>
+                <div className="mt-0"> {/* Ensure no top margin */}
+                    <div className="item-brand">{item.brand.toUpperCase()}</div> {/* Product Brand in capitals */}
+                    <Link to={`/product/${item.slug}`} className="text-decoration-none"> {/* Remove text underline */}
+                        <div className="item-name">{item.name}</div> {/* Product Name */}
+                        {item.reducedPrice ? (
+                          <div>
+                            <span className="item-price-small original-price" style={{ textDecoration: 'line-through' }}>
+                              ${item.price}
+                            </span>
+                            <span className="item-price-small reduced-price">
+                              ${item.reducedPrice}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="item-price">${item.price}</div>
+                        )}
+                        <div className="item-size">Size: {item.size}</div> {/* Product Size */}
+                        <div className="item-color">Color: {item.color}</div> {/* Product Color */}
+                    </Link>
 
-                    </Col>
-                    <Col md={2}>
-                    <Button
+                    {/* Quantity Adjustment */}
+                    <div className="my-2">
+                        <Button
                         onClick={() =>
                           updateCartHandler(item, item.quantity -= 1)
                         }
@@ -98,17 +114,22 @@ export default function CartScreen() {
                       >
                         <i className="fas fa-plus-circle"></i>
                       </Button>
-                    </Col>
-                    <Col md={3}>${item.price}</Col>
-                    <Col md={2}>
-                      <Button
-                        onClick={() => removeItemHandler(item)}
-                        variant="light"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </Button>
-                    </Col>
-                  </Row>
+                    </div>
+
+                    {/* Remove Item Button */}
+                    <div>
+                        <Button
+                            onClick={() => removeItemHandler(item)}
+                            variant="light"
+                        >
+                            <i className="fas fa-trash"></i>
+                        </Button>
+                    </div>
+                </div>
+            </Col>
+        </Row>
+
+
                 </ListGroup.Item>
               ))}
             </ListGroup>
@@ -120,10 +141,14 @@ export default function CartScreen() {
               <ListGroup variant="flush">
                 <ListGroup.Item>
                   <h3>
-                    Subtotal ({cartItems.reduce((a, c) => a + c.quantity, 0)}{' '}
-                    items) : $
-                    {cartItems.reduce((a, c) => a + c.price * c.quantity, 0)}
-                  </h3>
+                  Subtotal ({cartItems.reduce((a, c) => a + c.quantity, 0)} items) : $
+                  {cartItems.reduce((a, c) => {
+                    // Use reducedPrice if it exists, otherwise use the regular price
+                    const price = c.reducedPrice ? c.reducedPrice : c.price;
+                    return a + price * c.quantity;
+                  }, 0).toFixed(2)} {/* Added toFixed(2) for proper formatting */}
+                </h3>
+
                 </ListGroup.Item>
                 <ListGroup.Item>
                   <div className="d-grid">
@@ -143,7 +168,6 @@ export default function CartScreen() {
           </Card>
         </Col>
       </Row>
-    </div>
     </div>
   );
 }

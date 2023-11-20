@@ -36,6 +36,7 @@ const productSchema = new mongoose.Schema({
   sub_category: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
+  reducedPrice: { type: Number },
   rating: { type: Number, required: true },
   numReviews: { type: Number, required: true },
   reviews: [reviewSchema],

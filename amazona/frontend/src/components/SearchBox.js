@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import FormControl from 'react-bootstrap/FormControl';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function SearchBox() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [showInput, setShowInput] = useState(false);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    navigate(query ? `/search/?query=${query}` : '/search');
+    setQuery(''); // Clear the search bar after submitting
+  };
+
   const handleChange = (e) => {
     setQuery(e.target.value);
-    navigate(e.target.value ? `/search/?query=${e.target.value}` : '/search');
+  };
+
+  const handleBlur = () => {
+    setShowInput(false);
+    setQuery(''); // Clear the search bar on blur
   };
 
   return (
@@ -25,20 +35,23 @@ export default function SearchBox() {
         ></i>
       )}
       {showInput && (
-        <Form className="d-flex me-auto" onSubmit={(e) => e.preventDefault()}>
-          <FormControl
-            type="text"
-            name="q"
-            id="q"
-            value={query}
-            onChange={handleChange}
-            placeholder="Search..."
-            aria-label="Search Products"
-            autoFocus
-            onBlur={() => setShowInput(false)}
-            className="search-form"  // Applying the custom class
-          />
-        </Form>
+        <div className="search-popup">
+          <i className="fas fa-times icon-close" onClick={() => setShowInput(false)}></i>
+          <Form className="d-flex me-auto" onSubmit={handleSubmit}>
+            <FormControl
+              type="text"
+              name="q"
+              id="q"
+              value={query}
+              onChange={handleChange}
+              placeholder="Search..."
+              aria-label="Search Products"
+              autoFocus
+              onBlur={handleBlur}
+              className="search-form"
+            />
+          </Form>
+        </div>
       )}
     </div>
   );

@@ -77,17 +77,21 @@ return (
               icon: 'fas fa-truck'
             }
           ].map((card, index) => (
-            <Col md={2} key={index}>
-              <Card className="dashboard-card">
+               <Col xs={12} sm={6} md={4} lg={3} xl={2} key={index}>
+            <Card className="dashboard-card">
                 <Card.Body className="card-body-flex">
-                  <i className={`${card.icon} dashboard-card-icon`}></i>
-                  <div>
-                    <Card.Text className="dashboard-card-text">{card.title}</Card.Text>
-                    <Card.Title className="dashboard-card-title">{card.amount}</Card.Title>
-                  </div>
+                    <i className={`${card.icon} dashboard-card-icon`}></i>
+                    <div>
+                        <Card.Text className="dashboard-card-text">
+                            {card.title}
+                        </Card.Text>
+                        <Card.Title className="dashboard-card-title">
+                            {card.amount}
+                        </Card.Title>
+                    </div>
                 </Card.Body>
-              </Card>
-            </Col>
+            </Card>
+        </Col>
           ))}
         </Row>
 

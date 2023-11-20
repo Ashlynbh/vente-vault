@@ -167,6 +167,7 @@ export default function OrderListScreen() {
                 <td>
                   <Button
                     type="button"
+                    className="table-btn"
                     variant="light"
                     onClick={() => navigate(`/order/admin/${order._id}`)}
                   >
@@ -176,6 +177,7 @@ export default function OrderListScreen() {
                     {userInfo.isAdmin && (
                       <Button
                         type="button"
+                        className="table-btn"
                         variant="light"
                         onClick={() => deleteHandler(order)}
                       >

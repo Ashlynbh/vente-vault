@@ -39,14 +39,26 @@ const BrandExpressionOfInterestScreen = () => {
 };
 
   return (
-    <div className="container mt-3">
-      <h1>Brand Sign Up</h1>
-      <Form onSubmit={submitHandler}>
+    <div className="brand-signup-flex-container mt-3">
+      {/* Image Container */}
+      <div className="brand-signup-image-container">
+        <img src="../images/brand-pic.png" alt="Brand Collaboration" />
+      </div>
+
+      <div className="brand-signup-form-container">
+        <h1 className="brand-title">BRAND SIGN IN</h1>
+        <p className="brand-signup-description">
+      Welcome to our marketplace! We're excited that you're interested in selling your products with us. 
+      By signing up as a brand, you'll have the opportunity to showcase and sell your clothing to a wide audience.
+      Please fill out the form below to get started. Note that all brand sign-ups are subject to approval 
+      by our team, and we aim to complete this process within 48 hours. We look forward to partnering with you!
+    </p>
+      <Form className="brand-form" onSubmit={submitHandler}>
         <Form.Group className="mb-3" controlId="brandName">
-          <Form.Label>Brand Name</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter brand name"
+            className="brand-form-control"
+            placeholder="ENTER BRAND NAME"
             value={brandName}
             onChange={(e) => setBrandName(e.target.value)}
             required
@@ -54,10 +66,10 @@ const BrandExpressionOfInterestScreen = () => {
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="contactName">
-          <Form.Label>Contact Name</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter contact name"
+            className="brand-form-control"
+            placeholder="CONTACT NAME"
             value={contactName}
             onChange={(e) => setContactName(e.target.value)}
             required
@@ -65,50 +77,52 @@ const BrandExpressionOfInterestScreen = () => {
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="email">
-          <Form.Label>Email</Form.Label>
           <Form.Control
             type="email"
-            placeholder="Enter email"
+            className="brand-form-control"
+            placeholder="EMAIL"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </Form.Group>
          <Form.Group className="mb-3" controlId="password">
-          <Form.Label>Password</Form.Label>
           <Form.Control
-            type="text"
-            placeholder="Enter password"
+            type="password"
+            className="brand-form-control"
+            placeholder="PASSWORD"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
         <Form.Group className="mb-3" controlId="website">
-          <Form.Label>Website (optional)</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter website"
+            className="brand-form-control"
+            placeholder="WEBSITE (OPTIONAL)"
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
           />
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="message">
-          <Form.Label>Message</Form.Label>
           <Form.Control
+            className="brand-form-control"
             as="textarea"
             rows={3}
-            placeholder="Enter your message"
+            placeholder="MESSAGE"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             required
           />
         </Form.Group>
 
-        <Button variant="primary" type="submit">
+        <Button className="sign-in-button" variant="primary" type="submit">
           Submit
         </Button>
       </Form>
+    </div>
+        
     </div>
   );
 };

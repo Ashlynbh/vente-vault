@@ -200,7 +200,7 @@ useEffect(() => {
   ) : (
     <div>
       <Row>
-      <Col md={1}>
+       <Col xs={12} md={1} lg={1} className="order-2 order-md-1 mt-md-3 mt-lg-0">
         
         <div className="mt-3 thumbnails">
           {[product.image, ...product.images].map((x) => (
@@ -210,7 +210,7 @@ useEffect(() => {
               variant="light"
               onClick={() => setSelectedImage(x)}
             >
-              <img className="img-thumbnail" src={x} alt="product" />
+              <img className="product-thumbnail" src={x} alt="product" />
             </Button>
           ))}
               {/* Color Images */}
@@ -222,21 +222,21 @@ useEffect(() => {
                   variant="light"
                   onClick={() => setSelectedImage(variation.colorImage)}
                 >
-                  <img className="img-thumbnail" src={variation.colorImage} alt={variation.color} />
+                  <img className="product-thumbnail" src={variation.colorImage} alt={variation.color} />
                 </Button>
               )
             ))}
         </div>
 
         </Col>
-          <Col md={6}>
+            <Col xs={12} md={6} lg={6} className="order-1 order-md-2">
             <img
               className="img-large"
               src={selectedImage || product.image}
               alt={product.name}
             ></img>
           </Col>
-          <Col className="product-section2" md={4}>
+          <Col xs={12} md={4} lg={4} className="order-3">
             <ListGroup variant="flush">
               <ListGroup.Item>
                 <Helmet>
@@ -244,7 +244,20 @@ useEffect(() => {
                 </Helmet>
                 <h2 className="product-brand">{product.brand.toUpperCase()}</h2>
                 <h1 className="product-title">{product.name}</h1>
+                {product.reducedPrice ? (
+                <div>
+                  <span className="product-price original-price" style={{ textDecoration: 'line-through' }}>
+                    ${product.price}
+                  </span>
+                  <span className="product-price reduced-price">
+                    ${product.reducedPrice}
+                  </span>
+                </div>
+              ) : (
                 <h2 className="product-price">${product.price}</h2>
+              )}
+
+            
               </ListGroup.Item>
               <ListGroup.Item>
                 <Rating
@@ -375,8 +388,8 @@ useEffect(() => {
                   </Button>
                 </div>
                 {showReviewForm && (
-                  <form onSubmit={submitHandler}>
-                    <h2>Write areview</h2>
+                  <form className="review-form"onSubmit={submitHandler}>
+                    <h2>Write a review</h2>
                     <Form.Group className="mb-3" controlId="rating">
                       <Form.Label>Rating</Form.Label>
                       <Form.Select

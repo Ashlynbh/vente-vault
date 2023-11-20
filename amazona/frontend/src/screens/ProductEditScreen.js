@@ -92,6 +92,8 @@ export default function ProductEditScreen() {
   const [showInstagramLinkForm, setShowInstagramLinkForm] = useState(false);
   const [instagramPostIds, setInstagramPostIds] = useState([]);
   const [currentInstagramPostId, setCurrentInstagramPostId] = useState('');
+  const [reducedPrice, setReducedPrice] = useState('');
+
   // const [weight, setWeight] = useState(0);
 
 
@@ -124,6 +126,7 @@ function extractFileName(url) {
       setModelBodyMeasurements(data.modelBodyMeasurements);
       setSizeOfModelsGarment(data.sizeOfModelsGarment || '');
       setGarmentLength(data.garmentLength || 0);
+      setReducedPrice(data.reducedPrice || '');
       setHeightRise(data.heightRise || 0);
       setCreatedBy(data.createdBy);
       setCurrentInstagramPostId('');
@@ -172,6 +175,7 @@ function extractFileName(url) {
         name,
         slug,
         price,
+        reducedPrice: reducedPrice !== '' ? reducedPrice : null, 
         image,
         images,
         category,
@@ -431,52 +435,62 @@ const submitInstagramIdsHandler = async () => {
             {/* Name */}
             <Form.Group className="mb-3" controlId="name">
               <Form.Label className="form-title" >Name</Form.Label>
-              <Form.Control value={name} onChange={(e) => setName(e.target.value)} required />
+              <Form.Control className="product--edit-form" value={name} onChange={(e) => setName(e.target.value)} required />
             </Form.Group>
 
             {/* Slug */}
             <Form.Group className="mb-3" controlId="slug">
               <Form.Label className="form-title">Slug</Form.Label>
-              <Form.Control value={slug} onChange={(e) => setSlug(e.target.value)} required />
+              <Form.Control className="product--edit-form" value={slug} onChange={(e) => setSlug(e.target.value)} required />
             </Form.Group>
 
             {/* Brand */}
             <Form.Group className="mb-3" controlId="brand">
               <Form.Label className="form-title">Brand</Form.Label>
-              <Form.Control value={brand} onChange={(e) => setBrand(e.target.value)} required />
+              <Form.Control className="product--edit-form" value={brand} onChange={(e) => setBrand(e.target.value)} required />
             </Form.Group>
 
             {/* Description */}
             <Form.Group className="mb-3" controlId="description">
               <Form.Label className="form-title">Description</Form.Label>
-              <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
+              <Form.Control className="product--edit-form" as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </Form.Group>
 
             {/* Price */}
             <Form.Group className="mb-3" controlId="price">
               <Form.Label className="form-title">Price</Form.Label>
-              <Form.Control type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <Form.Control className="product--edit-form" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="reduced-price">
+              <Form.Label className="form-title"> Reduced Price</Form.Label>
+              <Form.Control className="product--edit-form" type="number" value={reducedPrice} onChange={(e) => setReducedPrice(e.target.value)}/>
             </Form.Group>
 
             {/* Category */}
             <Form.Group className="mb-3" controlId="category">
               <Form.Label className="form-title">Category</Form.Label>
-              <Form.Control value={category} onChange={(e) => setCategory(e.target.value)} required />
+              <Form.Select  className="small-font-dropdown" value={category} onChange={(e) => setCategory(e.target.value)} required>
+                <option value="">Select a Category</option>
+                <option value="Men">Men</option>
+                <option value="Women">Women</option>
+                <option value="Kids">Kids</option>
+                <option value="Accessories">Accessories</option>
+              </Form.Select>
             </Form.Group>
 
             {/* Sub-Category */}
             <Form.Group className="mb-3" controlId="subCategory">
               <Form.Label className="form-title">Sub-Category</Form.Label>
-              <Form.Control value={sub_category} onChange={(e) => setSubcategory(e.target.value)} required />
+              <Form.Control className="product--edit-form" value={sub_category} onChange={(e) => setSubcategory(e.target.value)} required />
             </Form.Group>
 
            <Form.Group className="mb-3" controlId="imageFile">
             <Form.Label className="form-title">Primary Image</Form.Label>
-            <Form.Control type="file" onChange={uploadFileHandler} />
+            <Form.Control className="product--edit-form" type="file" onChange={uploadFileHandler} />
             {/* Display image preview if `image` has a value */}
             {image && (
               <div className="image-preview">
-                <img src={image} alt="Primary" className="img-thumbnail" />
+                <img src={image} alt="Primary" className="edit-thumbnail" />
               </div>
             )}
             {loadingUpload && <LoadingBox></LoadingBox>}
@@ -485,12 +499,12 @@ const submitInstagramIdsHandler = async () => {
 
            <Form.Group className="mb-3" controlId="additionalImageFile">
             <Form.Label className="form-title">Additional Images</Form.Label>
-            <Form.Control type="file" onChange={(e) => uploadFileHandler(e, true)} />
+            <Form.Control className="product--edit-form" type="file" onChange={(e) => uploadFileHandler(e, true)} />
             {loadingUpload && <LoadingBox></LoadingBox>}
             <div className="additional-images-preview">
               {images.map((image, index) => (
                 <div key={index} className="additional-image-container">
-                  <img src={image} alt={`additional ${index}`} className="img-thumbnail" />
+                  <img src={image} alt={`additional ${index}`} className="edit-thumbnail" />
                   <Button variant="danger" onClick={() => deleteFileHandler(image)}>
                     <i className="fa fa-times-circle"></i>
                   </Button>
@@ -504,6 +518,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="fabricMaterial">
               <Form.Label className="form-title">Fabric/Material</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="text"
                 value={fabricMaterial}
                 onChange={(e) => setFabricMaterial(e.target.value)}
@@ -523,6 +538,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="occasion">
               <Form.Label className="form-title">Occasion</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="text"
                 value={occasion}
                 onChange={(e) => setOccasion(e.target.value)}
@@ -537,6 +553,7 @@ const submitInstagramIdsHandler = async () => {
               <Form.Group className="mb-3" controlId="measurementChest">
                 <Form.Label className="measurement-header">Chest (inches)</Form.Label>
                 <Form.Control
+                className="product--edit-form"
                   type="number"
                   value={measurements.chest}
                   onChange={(e) => handleMeasurementsChange(e, 'chest')}
@@ -548,6 +565,7 @@ const submitInstagramIdsHandler = async () => {
               <Form.Group className="mb-3" controlId="measurementWaist">
                 <Form.Label className="measurement-header">Waist (inches)</Form.Label>
                 <Form.Control
+                className="product--edit-form"
                   type="number"
                   value={measurements.waist}
                   onChange={(e) => handleMeasurementsChange(e, 'waist')}
@@ -558,6 +576,7 @@ const submitInstagramIdsHandler = async () => {
               <Form.Group className="mb-3" controlId="measurementHips">
                 <Form.Label className="measurement-header">Hips (inches)</Form.Label>
                 <Form.Control
+                className="product--edit-form"
                   type="number"
                   value={measurements.hips}
                   onChange={(e) => handleMeasurementsChange(e, 'hips')}
@@ -569,6 +588,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="modelChest">
               <Form.Label className="measurement-header">Model's Chest (inches)</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="number"
                 value={modelBodyMeasurements.chest}
                 onChange={(e) => handleModelMeasurementsChange(e, 'chest')}
@@ -579,6 +599,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="modelWaist">
               <Form.Label className="measurement-header">Model's Waist (inches)</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="number"
                 value={modelBodyMeasurements.waist}
                 onChange={(e) => handleModelMeasurementsChange(e, 'waist')}
@@ -589,6 +610,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="modelHips">
               <Form.Label className="measurement-header">Model's Hips (inches)</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="number"
                 value={modelBodyMeasurements.hips}
                 onChange={(e) => handleModelMeasurementsChange(e, 'hips')}
@@ -599,6 +621,8 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="sizeOfModelsGarment">
               <Form.Label className="form-title">Size of Model's Garment</Form.Label>
               <Form.Select
+              
+                className="small-font-dropdown" 
                 aria-label="Size of Model's Garment"
                 value={sizeOfModelsGarment}
                 onChange={(e) => setSizeOfModelsGarment(e.target.value)}
@@ -620,6 +644,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="garmentLength">
               <Form.Label className="form-title">Garment Length</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="number"
                 value={garmentLength}
                 onChange={(e) => setGarmentLength(e.target.value)}
@@ -630,6 +655,7 @@ const submitInstagramIdsHandler = async () => {
             <Form.Group className="mb-3" controlId="heightRise">
               <Form.Label className="form-title">Height Rise</Form.Label>
               <Form.Control
+              className="product--edit-form"
                 type="number"
                 value={heightRise}
                 onChange={(e) => setHeightRise(e.target.value)}
@@ -664,12 +690,13 @@ const submitInstagramIdsHandler = async () => {
               <div key={index}>
                 <Form.Group className="mb-3" controlId={`color-${index}`}>
                   <Form.Label className="form-title" >Color</Form.Label>
-                  <Form.Control type="text" value={variation.color} onChange={(e) => handleVariationChange(index, 'color', e.target.value)} required />
+                  <Form.Control className="product--edit-form"  type="text" value={variation.color} onChange={(e) => handleVariationChange(index, 'color', e.target.value)} required />
                 </Form.Group>
                 {/* Colour Hex input */}
                 <Form.Group className="mb-3" controlId={`colourhex-${index}`}>
                   <Form.Label className="form-title" >Colour Hex</Form.Label>
                   <Form.Control 
+                    className="product--edit-form"
                     type="text" 
                     placeholder="#ffffff" 
                     value={variation.colourhex} 
@@ -679,11 +706,11 @@ const submitInstagramIdsHandler = async () => {
                 </Form.Group>
                 <Form.Group className="mb-3" controlId={`colorImageFile-${index}`}>
                   <Form.Label className="form-title">Upload Color Image</Form.Label>
-                  <Form.Control type="file" onChange={(e) => handleColorImageUpload(index, e)} />
+                  <Form.Control  className="product--edit-form" type="file" onChange={(e) => handleColorImageUpload(index, e)} />
                   {/* Display image from the database if it exists */}
                   {variation.colorImage && (
                     <div className="image-preview">
-                      <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="img-thumbnail" />
+                      <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="edit-thumbnail" />
                     </div>
                   )}
                 </Form.Group>
@@ -696,6 +723,7 @@ const submitInstagramIdsHandler = async () => {
                         value={size.size}
                         onChange={(e) => handleSizeChange(index, sizeIndex, 'size', e.target.value)}
                         required
+                        className="small-font-dropdown" 
                       >
                         <option value="">Select size</option>
                         <option value="XS">XS</option>
@@ -709,7 +737,7 @@ const submitInstagramIdsHandler = async () => {
                     </Form.Group>
                     <Form.Group className="mb-3" controlId={`countInStock-${index}-${sizeIndex}`}>
                           <Form.Label className="form-title">Count In Stock</Form.Label>
-                          <Form.Control type="number" value={size.countInStock} onChange={(e) => handleSizeChange(index, sizeIndex, 'countInStock', e.target.value)} required />
+                          <Form.Control className="product--edit-form"  type="number" value={size.countInStock} onChange={(e) => handleSizeChange(index, sizeIndex, 'countInStock', e.target.value)} required />
                      </Form.Group>
                     <Button variant="danger"className="remove-btn"  size="sm" onClick={() => removeSize(index, sizeIndex)}>
                       Remove Size

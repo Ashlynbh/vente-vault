@@ -273,8 +273,9 @@ const generateAndSaveDiscountCode = async (value) => {
 
     const discountCode = new DiscountCode({
         code: code,
-        value: 10,
-        isActive:true,
+        value: 10,  // Value of the discount
+        type: 'percentage',  // Indicates that the discount is a percentage
+        isActive: true,
     });
 
     await discountCode.save();

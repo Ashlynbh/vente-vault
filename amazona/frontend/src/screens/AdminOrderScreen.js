@@ -343,7 +343,7 @@ function onError(err) {
                           src={item.image}
                           alt={item.name}
                           
-                          className="img-fluid rounded img-thumbnail"
+                          className="img-fluid rounded edit-thumbnail"
                         ></img>{' '}
                         <Link to={`/product/${item.slug}`}>
                         <span className="item-name">{item.name}</span>
