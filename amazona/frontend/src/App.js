@@ -31,6 +31,7 @@ import DashboardScreen from './screens/DashboardScreen';
 import ProductListScreen from './screens/ProductListScreen';
 import AdminRoute from './components/AdminRoute';
 import ProductEditScreen from './screens/ProductEditScreen';
+import ComingSoonScreen from './screens/ComingSoonScreen';
 import OrderListScreen from './screens/OrderListScreen';
 import UserListScreen from './screens/UserListScreen';
 import UserEditScreen from './screens/UserEditScreen';
@@ -171,6 +172,7 @@ useEffect(() => {
     setOpenDropdown(openDropdown === category ? null : category);
   };
 
+  const showComingSoon = true;
 
 
 
@@ -189,8 +191,10 @@ useEffect(() => {
         draggable
         pauseOnHover />
         <header>
+    {showComingSoon && <ComingSoonScreen />}
       <DiscountBar />
-          <Navbar expand="lg" className="custom-navbar"ref={navbarRef} >     
+          <Navbar expand="lg" className="custom-navbar"ref={navbarRef} >   
+            
               <Link to="/" className="navbar-brand">Vente Vault</Link>
                    {/* Hamburger menu toggle */}
                   <Navbar.Toggle aria-controls="basic-navbar-nav"
@@ -571,7 +575,8 @@ useEffect(() => {
               ></Route>
               <Route path="/brand/expression-of-interest" 
               element={<BrandExpressionOfInterestScreen />} />
-              <Route path="/" element={<HomeScreen />} />
+              <Route path="/" element={<ComingSoonScreen />} />
+              <Route path="/home" element={<HomeScreen />} />
               <Route path="/contact" element={<ContactScreen />} />
             </Routes>
           </div>

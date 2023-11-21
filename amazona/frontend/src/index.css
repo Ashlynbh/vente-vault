@@ -16,6 +16,114 @@
 
  }
 
+/* ///////COMING SOON ////// */
+
+.coming-soon-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coming-soon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f2f2f2;
+  /* Your desired background color */
+}
+.comingsoon-title{
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+
+}
+
+.comingsoon-title::before,
+.comingsoon-title::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background-color: var(--accent-colour_green);
+}
+.comingsoon-subtitle{
+  font-size: 16px;
+  color:black;
+
+}
+.comingsoon-description{
+  font-size: 12px;
+  color:black;
+
+}
+.central-content {
+  display: flex;
+  font-family: var(--body-font);
+  justify-content: center;
+  align-items: center;
+  width: 70%;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.comingsoon-image-container {
+  flex: 1;
+  max-width: 300px;
+  margin-right: 20px;
+}
+
+.comingsoon-image {
+  width: 100%;
+  height: auto;
+}
+
+.form-container {
+  flex: 2;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+
+  .comingsoon-image-container {
+      display:none;
+    }
+
+  .comingsoon-description {
+    font-size: 10px;
+
+  }
+
+  .central-content {
+    flex-direction: column;
+
+  }
+
+  .comingsoon-image-container,
+  .brand-signup-form-container {
+    width: 100%;
+    /* Full width on smaller screens */
+    margin: 0;
+    /* Adjust margin as needed */
+    padding: 0;
+    /* Adjust padding as needed */
+  }
+
+  /* Additional mobile-specific styles if needed */
+}
+
 
 /* /////TOAST MESSAGES//// */
 
