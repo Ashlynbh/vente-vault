@@ -191,7 +191,7 @@ useEffect(() => {
         draggable
         pauseOnHover />
         <header>
-    {showComingSoon && <ComingSoonScreen />}
+    {/* {showComingSoon && <ComingSoonScreen />} */}
       <DiscountBar />
           <Navbar expand="lg" className="custom-navbar"ref={navbarRef} >   
             
