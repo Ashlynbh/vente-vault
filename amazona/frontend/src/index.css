@@ -846,9 +846,6 @@ button.thumbnail {
 }
 .form-column {
   padding: 1rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
-  background-color: #f5efe9;
   margin-bottom: 1rem;
 
 }
@@ -856,6 +853,99 @@ button.thumbnail {
 .form-title{
   font-family: var(--body-font);
   font-size:12px;
+  text-transform: uppercase;
+}
+
+.section-header{
+  font-family: var(--body-font);
+  font-size: 14px !important;
+  font-weight: bold;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+}
+
+.add-material-btn{
+  margin-top: 10px;
+  cursor: pointer;
+  margin-top: 5px;
+  cursor: pointer;
+  color: white;
+  background-color: black;
+  font-family: var(--body-font);
+  text-transform: uppercase;
+  font-size: 14px;
+  height: 30px;
+  width: 10%;
+  margin-bottom: 2%;
+  border-radius: 0;
+
+}
+
+.section-header.images-header {
+  margin-top: 60px;
+}
+
+.line {
+  flex-grow: 1;
+  height: 2px;
+  /* Adjust thickness here */
+}
+
+.line.product-details {
+  background-color: var(--accent-colour_green);
+}
+
+/* Example color */
+.line.pricing {
+  background-color: var(--highlight-colour);
+}
+
+.line.images {
+  background-color: var(--accent-colour_navy);
+}
+
+.line.quantity-variations {
+  background-color: var(--accent-colour_cream);
+}
+
+.section-header-images {
+  font-family: var(--body-font);
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-top: 100px;
+
+}
+
+.small-font-dropdown{
+  background-color: whitesmoke;
+  border-radius: 0;
+  max-width: 100%;
+  border: none;
+  height: 50px;
+}
+
+.publish-button{
+  margin-top: 10px;
+  cursor: pointer;
+  margin-top: 5px;
+  cursor: pointer;
+  color: white;
+  background-color: var(--accent-colour_green);
+  font-family: var(--body-font);
+  text-transform: uppercase;
+  font-size: 14px;
+  height: 50px;
+  border-radius: 0px;
+  width: 40%;
+  margin-bottom: 2%;
+  border-radius: 0;
+  margin: 60px;
+
 }
 
 .measurement-header {
@@ -863,42 +953,30 @@ button.thumbnail {
   font-size: 10px;
 }
 
-/* Add this CSS to your stylesheet */
-.upload-button {
-  font-family:var(--body-font);
-  background-color: var(--accent-colour_navy);
-  color: var(--background-colour);
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  display: block;
-  margin: 1rem auto;
-  width: fit-content;
-  border-radius: 0px;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: bold;
-}
 
 
-.upload-button:hover {
-  background-color: #d8481c;
-}
 
 .add-btn{
   font-family: var(--body-font);
-  background-color: var(--accent-colour_green);
+  background-color: black;
   color: var(--background-colour);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
   margin: 1rem auto;
-  width:125px;
+  width:20%;
   border-radius: 0px;
   text-transform: uppercase;
   font-size: 12px;
-  font-weight: bold;
 
+}
+
+.uppercase-headers th {
+  text-transform: uppercase;
+}
+
+.form-select{
+  font-size: 12px;
 }
 
 .remove-btn {
@@ -954,7 +1032,8 @@ button.thumbnail {
 }
 
 .edit-thumbnail{
-  width: 80px;
+  width: 160px;
+  margin: 10px;
 }
 
 /* /////Product Page////// */
@@ -1958,10 +2037,14 @@ button.thumbnail {
 }
 
 .product--edit-form{
-  background-color: white !important;
+  background-color: whitesmoke !important;
+  border-radius: 0;
   max-width: 100%;
+  border: none;
+  height: 50px;
+  }
 
-}
+
 
 .shipping-form{
   max-width:90%;

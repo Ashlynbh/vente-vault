@@ -45,7 +45,6 @@ const reducer = (state, action) => {
 };
 
 function extractFileName(url) {
-  // Check if 'url' is truthy; if not, return an empty string or a default value
   if (!url) {
     return ''; // or return some default value like 'No file selected'
   }
@@ -132,11 +131,6 @@ function extractFileName(url) {
       setCurrentInstagramPostId('');
       setShowInstagramLinkForm(false);
       setInstagramPostIds(data.instagramPostIds || []);
-      // setWeight(data.weight || 0);
-      
-
-      // Add other new fields here as necessary
-      // ...
       
       dispatch({ type: 'FETCH_SUCCESS' });
     } catch (err) {

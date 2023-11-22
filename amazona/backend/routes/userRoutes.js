@@ -476,8 +476,8 @@ userRouter.post('/expression-of-interest', async (req, res) => {
           },
           'To': [
             {
-              'Email': 'ashlyn.bh@live.com.au', // Admin email
-              'Name': 'Admin'
+              'Email': 'info@remilabel.com', // Admin email
+              'Name': 'Remi'
             }
           ],
           'Subject': 'New Expression of Interest',

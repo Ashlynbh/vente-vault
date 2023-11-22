@@ -29,56 +29,82 @@ productRouter.get('/', isAuth, async (req, res) => {
   }
 });
 
-
-
-
 // POST route for creating a new product
 productRouter.post(
   '/',
   isAuth,
   isAdminOrBrand,
   expressAsyncHandler(async (req, res) => {
-    // Creating a new product with default sample values and new properties
-    const newProduct = new Product({
-      name: 'sample name ' + Date.now(),
-      slug: 'sample-name-' + Date.now(),
-      image: '/images/p1.jpg',
-      images: [],
-      brand: 'sample brand',
-      category: 'sample category',
-      sub_category: 'sample subcategory',
-      description: 'sample description',
-      price: 0,
+    const requiredFields = ['name', 'image', 'brand', 'category', 'sub_category', 'description', 'price', 'reducedPrice', 'sizeOfModelsGarment', 'garmentLength','modelBodyMeasurements', 'sizeguide' ,'image','variations'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+
+    // Check for duplicate product name
+    const existingProduct = await Product.findOne({ name: req.body.name });
+    if (existingProduct) {
+      return res.status(400).send({ message: 'Product with this name already exists' });
+    }
+
+        // Validate additional images - ensure there are at least 3 and at most 10
+    if (!req.body.images || req.body.images.length < 3 || req.body.images.length > 10) {
+      return res.status(400).send({ message: 'There must be at least 3 and at most 10 additional images' });
+    }
+
+        // Validate fabricMaterials - ensure it's provided, and has 1 to 3 entries
+    if (!req.body.fabricMaterial || req.body.fabricMaterial.length === 0 || req.body.fabricMaterial.length > 3) {
+      return res.status(400).send({ message: 'Fabric materials must have at least 1 entry' });
+    }
+
+    // Validate each fabric material entry to include both percentage and material
+    if (req.body.fabricMaterial.some(mat => mat.percentage === undefined || !mat.material)) {
+      return res.status(400).send({ message: 'Each fabric material entry must include both percentage and material' });
+    }
+
+    // Validate reducedPrice to be at least 30% lower than the price
+    if (req.body.reducedPrice && req.body.reducedPrice >= req.body.price * 0.70) {
+      return res.status(400).send({ message: 'Reduced price must be at least 30% lower than the original price' });
+    }
+
+
+    if (missingFields.length > 0) {
+      return res.status(400).send({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    }
+
+    // Generate a slug from the product name
+    const generateSlug = name => {
+      return name.toLowerCase().replace(/[\s\W-]+/g, '-') + '-' + Date.now();
+    };
+
+    const product = new Product({
+      name: req.body.name,
+      slug: generateSlug(req.body.name),
+      image: req.body.image,
+      images: req.body.images || [],
+      brand: req.body.brand,
+      category: req.body.category,
+      sub_category: req.body.sub_category,
+      description: req.body.description,
+      price: req.body.price,
       reducedPrice: req.body.reducedPrice,
+      sizeguide: req.body.sizeguide,
+      // Default values for rating and reviews as they are typically not set on creation
       rating: 0,
       numReviews: 0,
-      // weight: 0, // Default weight
-      instagramPostIds: [], // Initialize as empty array
-      featured: req.user.isAdmin ? req.body.featured || false : false,
-      isPublished: false,
+      instagramPostIds: req.body.instagramPostIds || [], 
+      featured: req.user.isAdmin ? req.body.featured : false,
+      isPublished: req.body.isPublished,
       isDeleted: false,
-      variations: [],
+      variations: req.body.variations || [],
       createdBy: req.user._id,
-      fabricMaterial: 'sample fabric/material',
-      occasion: 'sample occasion',
-      
-      measurements: {
-        chest: 0,
-        waist: 0,
-        hips: 0,
-      },
-      modelBodyMeasurements: {
-        chest: 0,
-        waist: 0,
-        hips: 0,
-      },
-      sizeOfModelsGarment: 'sample size',
-      garmentLength: 0,
-      heightRise: 0,
-      
+      fabricMaterial: req.body.fabricMaterial,
+      product_tags: req.body.product_tags,
+      measurements: req.body.measurements || { chest: 0, waist: 0, hips: 0 },
+      modelBodyMeasurements: req.body.modelBodyMeasurements || { chest: 0, waist: 0, hips: 0, height:0 },
+      sizeOfModelsGarment: req.body.sizeOfModelsGarment,
+      garmentLength: req.body.garmentLength || 0,
+      // include other fields as required
     });
-    const product = await newProduct.save();
-    res.send({ message: 'Product Created', product });
+    const createdProduct = await product.save();
+    res.send({ message: 'Product Created', product: createdProduct });
   })
 );
 
@@ -93,8 +119,20 @@ productRouter.put(
     if (product) {
       product.name = req.body.name || product.name;
       product.slug = req.body.slug || product.slug;
-      product.price = req.body.price || product.price;
-      product.reducedPrice = req.body.reducedPrice !== undefined ? req.body.reducedPrice : product.reducedPrice;
+      // Validate if price and reducedPrice are provided and not zero
+      if (req.body.price === undefined || req.body.reducedPrice === undefined || req.body.price === 0 || req.body.reducedPrice === 0) {
+        return res.status(400).send({ message: 'Both price and reduced price must be provided' });
+      }
+
+      
+
+      // Validate reducedPrice to be at least 30% lower than the price
+      if (req.body.reducedPrice >= req.body.price * 0.70) {
+        return res.status(400).send({ message: 'Reduced price must be at least 30% lower than the original price' });
+      }
+      // Update price and reducedPrice
+      product.price = req.body.price;
+      product.reducedPrice = req.body.reducedPrice;
       product.image = req.body.image || product.image;
       product.images = req.body.images || product.images;
       product.category = req.body.category || product.category;

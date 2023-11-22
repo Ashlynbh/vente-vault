@@ -38,6 +38,7 @@ import UserEditScreen from './screens/UserEditScreen';
 import MapScreen from './screens/MapScreen';
 import ForgetPasswordScreen from './screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
+import NewProductScreen from './screens/NewProductScreen';
 import AdminOrderScreen from './screens/AdminOrderScreen';
 import AdminInstagramScreen from './screens/AdminInstagramScreen';
 import BrandExpressionOfInterestScreen from './screens/BrandExpressionofinterestScreen';
@@ -193,9 +194,14 @@ useEffect(() => {
         <header>
     {/* {showComingSoon && <ComingSoonScreen />} */}
       <DiscountBar />
-          <Navbar expand="lg" className="custom-navbar"ref={navbarRef} >   
-            
-              <Link to="/" className="navbar-brand">Vente Vault</Link>
+          <Navbar expand="lg" className="custom-navbar"ref={navbarRef} >           
+              <img 
+                  className="navbar-brand" 
+                  src="/images/logo2.png" 
+                  alt="Vente Vault Logo" 
+                  style={{ maxWidth: '120px', maxHeight: '60px' }} 
+              />
+
                    {/* Hamburger menu toggle */}
                   <Navbar.Toggle aria-controls="basic-navbar-nav"
                   onClick={() => setExpanded(!expanded)} />
@@ -562,6 +568,14 @@ useEffect(() => {
                 element={
                   <BrandAdmin>
                     <ProductEditScreen />
+                  </BrandAdmin>
+                }
+              ></Route>
+              <Route
+                path="/admin/product/new"
+                element={
+                  <BrandAdmin>
+                    <NewProductScreen />
                   </BrandAdmin>
                 }
               ></Route>

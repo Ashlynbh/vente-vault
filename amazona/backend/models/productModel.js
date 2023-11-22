@@ -29,22 +29,26 @@ const colorSizeSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   slug: { type: String, required: true, unique: true },
-  image: { type: String, required: true }, // Primary image
-  images: [String], // Additional images
+  image: { type: String, required: true }, 
+  sizeguide: { type: String, required: true }, 
+  images: [{ type: String }],
   brand: { type: String, required: true },
   category: { type: String, required: true },
   sub_category: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: Number, required: true },
-  reducedPrice: { type: Number },
+  reducedPrice: { type: Number,required:true },
   rating: { type: Number, required: true },
   numReviews: { type: Number, required: true },
   reviews: [reviewSchema],
   featured: { type: Boolean, required: true, default: false },
   isPublished: { type: Boolean, required: true, default: false },
   variations: [colorSizeSchema], // Color and size variations
-  fabricMaterial: { type: String },
-  occasion: { type: String },
+  fabricMaterial: [{
+  percentage: { type: Number, required: true },
+  material: { type: String, required: true }
+}],
+  product_tags: { type: String },
   isDeleted: { type: Boolean, required: true, default: false },
   // weight: { type: Number, required: true }, 
   instagramPostIds: [{ type: String }], 
@@ -59,13 +63,13 @@ const productSchema = new mongoose.Schema({
     hips: { type: Number },
   },
   modelBodyMeasurements: {
-    chest: { type: Number },
-    waist: { type: Number },
-    hips: { type: Number },
+    chest: { type: Number, required:true },
+    waist: { type: Number, required:true },
+    hips: { type: Number, required:true },
+    height: { type: Number, required:true }
   },
-  sizeOfModelsGarment: { type: String },
-  garmentLength: { type: Number },
-  heightRise: { type: Number },
+  sizeOfModelsGarment: { type: String, required:true },
+  garmentLength: { type: Number, required:true },
 
 }, {
   timestamps: true,

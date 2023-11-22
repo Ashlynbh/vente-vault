@@ -16,6 +16,7 @@ const BrandExpressionOfInterestScreen = () => {
   const [password, setPassword] = useState('');
   const [website, setWebsite] = useState('');
   const [message, setMessage] = useState('');
+  const [submissionStatus, setSubmissionStatus] = useState('');
 
   const pageStyles = {
     margin: 0,
@@ -24,9 +25,9 @@ const BrandExpressionOfInterestScreen = () => {
     backgroundColor: 'whitesmoke',
   };
 
-
   const submitHandler = async (event) => {
     event.preventDefault();
+    setSubmissionStatus(''); // Reset the status message
     try {
       // POST request to your API endpoint
       const { data } = await axios.post('/api/users/expression-of-interest', {
@@ -37,18 +38,16 @@ const BrandExpressionOfInterestScreen = () => {
         website,
         message,
       });
-    toast.success(data.message);
-    // Reset the form or navigate the user to another page
-  } catch (error) {
-    if (error.response && error.response.status === 409) {
-      // Handle the duplicate key error specifically
-      toast.error('Email already exists');
-    } else {
-      // Handle other types of errors
-      toast.error(getError(error));
+      toast.success(data.message);
+      setSubmissionStatus('Thank you! We will be in touch.');
+      // Here, you can also reset the form or navigate the user to another page
+    } catch (error) {
+      toast.error('There was an error with your submission.');
+      setSubmissionStatus('There was an error with your details, please try again.');
+      // Handle other types of errors, such as displaying a specific message
     }
-  }
-};
+  };
+
 
   return (
       <div className="coming-soon-overlay">
@@ -132,7 +131,7 @@ const BrandExpressionOfInterestScreen = () => {
             required
           />
         </Form.Group>
-
+ {submissionStatus && <div className="submission-status-message">{submissionStatus}</div>}
         <Button className="sign-in-button" variant="primary" type="submit">
           Submit
         </Button>
