@@ -468,7 +468,7 @@ setFabricMaterials(updatedMaterials);
                             <span className="line product-details"></span>
                             
                         </div>
-                        <p>Enter the essential details of the product here, and your responses will be recorded to users on the product page. Examples have been provided for each section as a guide.</p>
+                        <p className="product-lrg">Enter the essential details of the product here, and your responses will be recorded to users on the product page. Examples have been provided for each section as a guide.</p>
                         <Form.Group className="mb-3" controlId="name">
                         <Form.Label className="form-title" >Name</Form.Label>
                         <Form.Control className="product--edit-form" placeholder="Leather Biker Jacket" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -506,7 +506,7 @@ setFabricMaterials(updatedMaterials);
                         {/* Occasion */}
                         <Form.Group className="mb-3" controlId="product_tags">
                         <Form.Label className="form-title">Product Tags</Form.Label>
-                        <p>Product tags will not directly be recorded on the product page, the intent is for users to use these as keyword searches for items.</p>
+                        <p className="product-small">Product tags will not directly be recorded on the product page, the intent is for users to use these as keyword searches for items.</p>
                         <Form.Control
                         className="product--edit-form"
                             type="text"
@@ -519,12 +519,12 @@ setFabricMaterials(updatedMaterials);
 
                     <Form.Group className="mb-3" controlId="fabricMaterial">
                     <Form.Label className="form-title">Fabric/Material</Form.Label>
-                    <p>Please ensure you record the material and the percentage for each fabric/material used.</p>
+                    <p className="product-small">Please ensure you record the material and the percentage for each fabric/material used.</p>
                     {fabricMaterial.map((material, index) => (
                         <div key={index} className="fabric-material-input-group">
                             <input 
                                 type="number" 
-                                placeholder="70%" 
+                                placeholder="70" 
                                 className="product--edit-form"
                                 value={material.percentage} 
                                 onChange={(e) => handleFabricMaterialChange(index, 'percentage', e.target.value)}
@@ -551,7 +551,7 @@ setFabricMaterials(updatedMaterials);
 
                         {/* Measurements Header */}
                         <h3 className="form-title"> Garment's Measurements</h3>
-                        <p>These measurements are an optional field, please leave this blank if you dont have these measurements.</p>
+                        <p className="product-small">These measurements are an optional field, please leave this blank if you dont have these measurements.</p>
 
                         {/* Chest Measurement */}
                         <Form.Group className="mb-3" controlId="measurementChest">
@@ -589,7 +589,7 @@ setFabricMaterials(updatedMaterials);
                         </Form.Group>
                         {/* Model's Body Measurements */}
                         <h3 className="form-title">Models Measurements</h3>
-                        <p>These measurements are required, please record them or you will not be able to proceed.</p>
+                        <p className="product-small">These measurements are required, please record them or you will not be able to proceed.</p>
                         <Form.Group className="mb-3" controlId="modelChest">
                         <Form.Label className="measurement-header">Model's Chest (inches)</Form.Label>
                         <Form.Control
@@ -678,7 +678,7 @@ setFabricMaterials(updatedMaterials);
                             <h2>Pricing</h2>
                             <span className="line pricing"></span>
                         </div>
-                         <p>Please record the original price of the item and the reduced price, the reduced price will be the final price of the item which the customer will pay. The original price is only for display. Please ensure the reduced price is greater or equal to 30% otherwise you will not be able to proceed.</p>
+                         <p className="product-lrg">Please record the original price of the item and the reduced price, the reduced price will be the final price of the item which the customer will pay. The original price is only for display. Please ensure the reduced price is greater or equal to 30% otherwise you will not be able to proceed.</p>
                         <Form.Group className="mb-3" controlId="price">
                         <Form.Label className="form-title"> Original Price</Form.Label>
                         <Form.Control placeholder="180"className="product--edit-form" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
@@ -696,7 +696,7 @@ setFabricMaterials(updatedMaterials);
                             <h2>Images</h2>
                             <span className="line images"></span>
                     </div>
-                     <p>Please ensure all images are the correct resolution and dimensions, to ensure consistency on our site we have set the dimensions to 1000 x 1333. Your primary image will be the first image users view and associate with your product. Please keep in mind you will be adding further images in the variations section.</p>
+                     <p className="product-small"> Please ensure all images are the correct resolution and dimensions, to ensure consistency on our site we have set the dimensions to 1000 x 1333. Your primary image will be the first image users view and associate with your product. Please keep in mind you will be adding further images in the variations section.</p>
                     <Form.Group className="mb-3" controlId="imageFile">
                         <Form.Label className="form-title">Primary Image</Form.Label>
                         <Form.Control className="product--edit-form" type="file" onChange={uploadFileHandler} />
@@ -710,7 +710,7 @@ setFabricMaterials(updatedMaterials);
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="additionalImageFile">
                         <Form.Label className="form-title">Additional Images</Form.Label>
-                         <p>Pleasee add additional images that are not the primary image and are not associated with a colour as these will be recorded in the variations section. A minimum of 3 images is required with a maximum of 10.</p>
+                         <p className="product-small">Please add additional images that are not the primary image and are not associated with a colour as these will be recorded in the variations section. A minimum of 3 images is required with a maximum of 10.</p>
                         <Form.Control className="product--edit-form" type="file" onChange={(e) => uploadFileHandler(e, true)} />
 
                         <div className="additional-images-preview">
@@ -725,7 +725,7 @@ setFabricMaterials(updatedMaterials);
                         </div>
                     </Form.Group>   
                     <Form.Group className="mb-3" controlId="sizeGuideImageFile">
-                         <p>Please upload your size guide which will be displayed to users on the product page.</p>
+                         <p className="product-small">Please upload your size guide which will be displayed to users on the product page.</p>
                         <Form.Label className="form-title">Size Guide Image</Form.Label>
                         <Form.Control className="product--edit-form" type="file" onChange={uploadSizeGuideHandler} />
 
@@ -765,7 +765,7 @@ setFabricMaterials(updatedMaterials);
                         <h2>Quantity and Variations</h2>
                         <span className="line quantity-variations"></span>
                     </div>
-                     <p>This is where you will record your quantity for specific colour and size variations, we recommend monitoring your stock as it will reduce with successful sales.</p>
+                     <p className="product-lrg" > This is where you will record your quantity for specific colour and size variations, we recommend monitoring your stock as it will reduce with successful sales.</p>
 
               <Table striped bordered hover>
                 <thead className="uppercase-headers">
@@ -779,104 +779,122 @@ setFabricMaterials(updatedMaterials);
                     </tr>
                 </thead>
                 <tbody>
-  {variations.map((variation, variationIndex) => (
-    variation.sizes.map((size, sizeIndex) => (
-      <React.Fragment key={`variation-${variationIndex}-size-${sizeIndex}`}>
-        <tr>
-          {/* Color - Shown only for the first size of each color */}
-          {sizeIndex === 0 && (
-            <td rowSpan={variation.sizes.length + 1}>
-              <Form.Control
-                type="text"
-                value={variation.color}
-                onChange={(e) => handleVariationChange(variationIndex, 'color', e.target.value)}
-                required
-              />
-            </td>
-          )}
+                    {variations.map((variation, variationIndex) => (
+                        variation.sizes.map((size, sizeIndex) => (
+                        <React.Fragment key={`variation-${variationIndex}-size-${sizeIndex}`}>
+                            <tr>
+                            {/* Color - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                    <Form.Select
+                                    value={variation.color}
+                                    onChange={(e) => handleVariationChange(variationIndex, 'color', e.target.value)}
+                                    required
+                                    >
+                                    <option value="">Select Color</option>
+                                    <option value="Black">Black</option>
+                                    <option value="White">White</option>
+                                    <option value="Grey">Grey</option>
+                                    <option value="Blue">Blue</option>
+                                    <option value="Red">Red</option>
+                                    <option value="Green">Green</option>
+                                    <option value="Yellow">Yellow</option>
+                                    <option value="Pink">Pink</option>
+                                    <option value="Navy">Navy</option>
+                                    <option value="Cream">Cream</option>
+                                    <option value="Brown">Brown</option>
+                                    <option value="Purple">Purple</option>
+                                    <option value="Orange">Orange</option>
+                                    <option value="Beige">Beige</option>
+                                    <option value="Lime">Lime</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Silver">Silver</option>
+                                    </Form.Select>
+                                </td>
+                                )}
 
-          {/* Color Hex - Shown only for the first size of each color */}
-          {sizeIndex === 0 && (
-            <td rowSpan={variation.sizes.length + 1}>
-              <Form.Control
-                type="text"
-                placeholder="#ffffff"
-                value={variation.colourhex}
-                onChange={(e) => handleVariationChange(variationIndex, 'colourhex', e.target.value)}
-                required
-              />
-            </td>
-          )}
+                            {/* Color Hex - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="#ffffff"
+                                    value={variation.colourhex}
+                                    onChange={(e) => handleVariationChange(variationIndex, 'colourhex', e.target.value)}
+                                    required
+                                />
+                                </td>
+                            )}
 
-          {/* Color Image - Shown only for the first size of each color */}
-          {sizeIndex === 0 && (
-            <td rowSpan={variation.sizes.length + 1}>
-              <Form.Group controlId={`colorImageFile-${variationIndex}`}>
-                <Form.Control 
-                  className="product--edit-form" 
-                  type="file" 
-                  onChange={(e) => handleColorImageUpload(variationIndex, e)} 
-                />
-                {variation.colorImage && (
-                  <div className="image-preview">
-                    <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="edit-thumbnail" />
-                  </div>
-                )}
-              </Form.Group>
-            </td>
-          )}
+                            {/* Color Image - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                <Form.Group controlId={`colorImageFile-${variationIndex}`}>
+                                    <Form.Control 
+                                    className="product--edit-form" 
+                                    type="file" 
+                                    onChange={(e) => handleColorImageUpload(variationIndex, e)} 
+                                    />
+                                    {variation.colorImage && (
+                                    <div className="image-preview">
+                                        <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="edit-thumbnail" />
+                                    </div>
+                                    )}
+                                </Form.Group>
+                                </td>
+                            )}
 
-          {/* Size */}
-          <td>
-            <Form.Select
-              aria-label="Size"
-              value={size.size}
-              onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'size', e.target.value)}
-              required
-            >
-              <option value="">Select size</option>
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
-              <option value="XXXL">XXXL</option>
-            </Form.Select>
-          </td>
+                            {/* Size */}
+                            <td>
+                                <Form.Select
+                                aria-label="Size"
+                                value={size.size}
+                                onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'size', e.target.value)}
+                                required
+                                >
+                                <option value="">Select size</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                                <option value="XXXL">XXXL</option>
+                                </Form.Select>
+                            </td>
 
-          {/* Quantity */}
-          <td>
-            <Form.Control
-              type="number"
-              value={size.countInStock}
-              onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'countInStock', e.target.value)}
-              required
-            />
-          </td>
+                            {/* Quantity */}
+                            <td>
+                                <Form.Control
+                                type="number"
+                                value={size.countInStock}
+                                onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'countInStock', e.target.value)}
+                                required
+                                />
+                            </td>
 
-          {/* Actions - Include Remove Size button for each size */}
-          <td>
-            <Button variant="danger" size="sm" onClick={() => removeSize(variationIndex, sizeIndex)}>
-              Remove Size
-            </Button>
-          </td>
-        </tr>
+                            {/* Actions - Include Remove Size button for each size */}
+                            <td>
+                                <Button variant="danger" size="sm" onClick={() => removeSize(variationIndex, sizeIndex)}>
+                                Remove Size
+                                </Button>
+                            </td>
+                            </tr>
 
-        {/* Row for adding new size - appears only once per color variation */}
-        {sizeIndex === variation.sizes.length - 1 && (
-          <tr>
-            <td colSpan="6">
-              <Button size="sm" className="add-btn" onClick={() => addSize(variationIndex)}>
-                Add Size
-              </Button>
-            </td>
-          </tr>
-        )}
-      </React.Fragment>
-    ))
-  ))}
-</tbody>
+                            {/* Row for adding new size - appears only once per color variation */}
+                            {sizeIndex === variation.sizes.length - 1 && (
+                            <tr>
+                                <td colSpan="6">
+                                <Button size="sm" className="add-btn" onClick={() => addSize(variationIndex)}>
+                                    Add Size
+                                </Button>
+                                </td>
+                            </tr>
+                            )}
+                        </React.Fragment>
+                        ))
+                    ))}
+                    </tbody>
 
                 </Table>
 

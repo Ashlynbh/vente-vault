@@ -952,7 +952,15 @@ button.thumbnail {
   font-family: var(--body-font);
   font-size: 10px;
 }
+.product-lrg{
+  font-size: 14px;
+  font-family: var(--body-font);
+}
 
+.product-small{
+  font-size: 12px;
+  font-family: var(--body-font);
+}
 
 
 
@@ -2041,6 +2049,7 @@ button.thumbnail {
   border-radius: 0;
   max-width: 100%;
   border: none;
+  font-size:12px;
   height: 50px;
   }
 
