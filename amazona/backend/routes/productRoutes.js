@@ -96,7 +96,7 @@ productRouter.post(
       variations: req.body.variations || [],
       createdBy: req.user._id,
       fabricMaterial: req.body.fabricMaterial,
-      product_tags: req.body.product_tags,
+      product_tags: req.body.product_tags  || [],
       measurements: req.body.measurements || { chest: 0, waist: 0, hips: 0 },
       modelBodyMeasurements: req.body.modelBodyMeasurements || { chest: 0, waist: 0, hips: 0, height:0 },
       sizeOfModelsGarment: req.body.sizeOfModelsGarment,
@@ -145,7 +145,7 @@ productRouter.put(
       product.isDeleted = req.body.isDeleted || product.isDeleted;
       product.variations = req.body.variations || product.variations;
       product.fabricMaterial = req.body.fabricMaterial || product.fabricMaterial;
-      product.occasion = req.body.occasion || product.occasion;
+      product.product_tags = req.body.product_tags || [];
       product.measurements = req.body.measurements || product.measurements;
       product.modelBodyMeasurements = req.body.modelBodyMeasurements || product.modelBodyMeasurements;
       product.sizeOfModelsGarment = req.body.sizeOfModelsGarment || product.sizeOfModelsGarment;
@@ -269,6 +269,7 @@ productRouter.get(
     const searchQuery = query.query || '';
     const brand = query.brand || '';
     const isPublishedFilter = { isPublished: true, isDeleted: false };
+    const product_tags = query.product_tags || '';
 
 
 
@@ -277,7 +278,8 @@ productRouter.get(
       ? {
           $or: [
             { name: { $regex: searchQuery, $options: 'i' } },
-            { brand: { $regex: searchQuery, $options: 'i' } }
+            { brand: { $regex: searchQuery, $options: 'i' } },
+            { product_tags: { $regex: searchQuery, $options: 'i' } }
           ],
         }
       : {};
@@ -285,6 +287,8 @@ productRouter.get(
     const categoryFilter = category && category !== 'all' ? { category } : {};
     const subcategoryFilter = sub_category && sub_category !== 'all' ? { sub_category } : {};
     const brandFilter = brand && brand !== 'all' ? { brand } : {};
+    const tagsFilter = product_tags && product_tags !== 'all'
+
 
     const ratingFilter = rating && rating !== 'all'
       ? {
@@ -324,6 +328,7 @@ productRouter.get(
       ...priceFilter,
       ...ratingFilter,
       ...isPublishedFilter,
+      ...tagsFilter,
     })
       .sort(sortOrder)
       .skip(pageSize * (page - 1))
@@ -337,7 +342,11 @@ productRouter.get(
       ...priceFilter,
       ...ratingFilter,
       ...isPublishedFilter,
+      ...tagsFilter,
+
     });
+
+
 
     res.send({
       products,

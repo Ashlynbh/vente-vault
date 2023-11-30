@@ -3,9 +3,6 @@ import Col from "react-bootstrap/esm/Col";
 import Row from "react-bootstrap/esm/Row";
 import Rating from "../components/Rating";
 import ListGroup from 'react-bootstrap/ListGroup';
-import Badge from 'react-bootstrap/Badge';
-import Card from 'react-bootstrap/Card'
-import ListGroupItem from "react-bootstrap/esm/ListGroupItem";
 import Button from "react-bootstrap/esm/Button";
 import { Helmet } from "react-helmet-async";
 import MessageBox from "../components/MessageBox";
@@ -14,9 +11,8 @@ import { getError } from "../utils";
 import { Store } from "../Store";
 import { useContext, useEffect, useReducer, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import Form from 'react-bootstrap/Form';
-import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import { toast } from 'react-toastify';
+import Slider from 'react-slick';
 
 
 
@@ -40,6 +36,13 @@ const reducer = (state, action) => {
             return state;
     }
 };
+
+
+
+
+
+
+
 function ProductScreen(){
     let reviewsRef = useRef();
 
@@ -52,6 +55,121 @@ function ProductScreen(){
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [availableSizes, setAvailableSizes] = useState({});
     const [isProductOutOfStock, setIsProductOutOfStock] = useState(false);
+    const [hasScrolled, setHasScrolled] = useState(false);
+
+
+    function SampleNextArrow(props) {
+    const { className, style, onClick, currentSlide, slideCount } = props;
+    const isLastSlide = currentSlide >= slideCount - 7; // Adjust this based on slidesToShow
+
+    return (
+      !isLastSlide && (
+        <div
+          className={`${className} custom-slick-next`}
+          style={{ ...style, display: "block" }}
+          onClick={onClick}
+        >
+          <i className="fa fa-chevron-down"></i>
+        </div>
+      )
+    );
+  }
+
+
+  function SamplePrevArrow(props) {
+    const { className, style, onClick, currentSlide } = props;
+    return (
+      <div
+        className={`${className} custom-slick-prev`}
+        style={{ ...style, display: "block" }}
+        onClick={() => {
+          if (currentSlide > 0) {
+            onClick();
+          }
+        }}
+      >
+        <i className="fa fa-chevron-up"></i>
+      </div>
+    );
+  }
+
+  function SampleNextArrowHorizontal(props) {
+  const { className, style, onClick } = props;
+  return (
+    <div
+      className={`${className} custom-slick-next-horizontal`}
+      style={{ ...style, display: "block" }}
+      onClick={onClick}
+    >
+      <i className="fa fa-chevron-right"></i> {/* Right arrow */}
+    </div>
+  );
+}
+
+function SamplePrevArrowHorizontal(props) {
+  const { className, style, onClick } = props;
+  return (
+    <div
+      className={`${className} custom-slick-prev-horizontal`}
+      style={{ ...style, display: "block" }}
+      onClick={onClick}
+    >
+      <i className="fa fa-chevron-left"></i> {/* Left arrow */}
+    </div>
+  );
+}
+
+    // State to track the current slide
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const [{ loading, error, product, loadingCreateReview }, dispatch] = useReducer(reducer, {
+  product: { images: [], variations: [] }, // Default values
+  loading: true,
+  error: '',
+});
+
+  const allImages = product && Array.isArray(product.images) && Array.isArray(product.variations)
+  ? [
+      product.image, 
+      ...product.images, 
+      ...product.variations.map(v => v.colorImage)
+    ].filter(Boolean)
+  : [product.image];
+
+  // Calculate the total number of slides
+  const slideCount = allImages.length;
+
+
+
+  const sliderSettings = {
+  // Your default settings here...
+  infinite: false,
+  arrows: true,
+  vertical: true,
+  verticalSwiping: true,
+  slidesToScroll: 1,
+  slidesToShow: 1, // Default to show 1 slide at a time, adjust as needed
+  nextArrow: <SampleNextArrow />,
+  prevArrow: <SamplePrevArrow />,
+  responsive: [
+    {
+      breakpoint: 768, // Adjust as needed for mobile breakpoint
+      settings: {
+        vertical: false, // Disable vertical mode for mobile
+        verticalSwiping: false,
+        slidesToShow: 4, // Show 3 images at a time on mobile
+        slidesToScroll: 1, // Scroll 1 image at a time
+        nextArrow: <SampleNextArrowHorizontal />,
+        prevArrow: <SamplePrevArrowHorizontal />,
+      }
+    }
+    
+  ]
+};
+
+
+
+
 
 
     const params = useParams();
@@ -62,12 +180,7 @@ function ProductScreen(){
 
  
 
-    const [{ loading, error, product, loadingCreateReview }, dispatch] =
-        useReducer(reducer, {
-        product: [],
-        loading: true,
-        error: '',
-        });
+
 
  useEffect(() => {
     const fetchData = async () => {
@@ -106,6 +219,8 @@ function ProductScreen(){
 
     const { state, dispatch: ctxDispatch } = useContext(Store);
     const { cart, userInfo } = state;
+
+    
 
 
     const addToCartHandler = async () => {
@@ -147,6 +262,8 @@ useEffect(() => {
 }, [product, selectedColor]);
 
 
+
+
 useEffect(() => {
   if (product && product.variations && product.variations.length > 0) {
     // Set the initial selected color to the first color in the variations array
@@ -154,6 +271,9 @@ useEffect(() => {
     setSelectedColorHex(product.variations[0].colourhex); // Assuming you have a state for this
   }
 }, [product]);
+
+
+
 
 
     const submitHandler = async (e) => {
@@ -188,6 +308,8 @@ useEffect(() => {
       dispatch({ type: 'CREATE_FAIL' });
     }
   };
+  console.log(allImages); // Check the array contents
+
 
    // Function to toggle the visibility
     const toggleLearnMore = () => {
@@ -203,29 +325,31 @@ useEffect(() => {
        <Col xs={12} md={1} lg={1} className="order-2 order-md-1 mt-md-3 mt-lg-0">
         
         <div className="mt-3 thumbnails">
-          {[product.image, ...product.images].map((x) => (
-            <Button
-              className="thumbnail"
-              key={x}
-              variant="light"
-              onClick={() => setSelectedImage(x)}
-            >
-              <img className="product-thumbnail" src={x} alt="product" />
-            </Button>
-          ))}
-              {/* Color Images */}
-            {product.variations.map((variation) => (
-              variation.colorImage && (
+             {allImages.length > 6 ? (
+              <Slider {...sliderSettings}>
+                {allImages.map((x, index) => (
+                  <div key={index}>
+                    <img
+                      className="product-thumbnail"
+                      src={x}
+                      alt="product"
+                      onClick={() => setSelectedImage(x)}
+                    />
+                  </div>
+                ))}
+              </Slider>
+            ) : (
+              allImages.map((x, index) => (
                 <Button
                   className="thumbnail"
-                  key={variation.color}
+                  key={index}
                   variant="light"
-                  onClick={() => setSelectedImage(variation.colorImage)}
+                  onClick={() => setSelectedImage(x)}
                 >
-                  <img className="product-thumbnail" src={variation.colorImage} alt={variation.color} />
+                  <img className="product-thumbnail" src={x} alt="product" />
                 </Button>
-              )
-            ))}
+              ))
+            )}
         </div>
 
         </Col>
@@ -260,10 +384,10 @@ useEffect(() => {
             
               </ListGroup.Item>
               <ListGroup.Item>
-                <Rating
+                {/* <Rating
                   rating={product.rating}
                   numReviews={product.numReviews}
-                ></Rating>
+                ></Rating> */}
               </ListGroup.Item>
               {/* Color Selection */}
               <ListGroup.Item>
@@ -334,13 +458,20 @@ useEffect(() => {
             <ListGroup.Item>
               <div className="product-extra-info">
                 <h4>Model's Details</h4>
-                <p> Our model is wearing a size {product.sizeOfModelsGarment}</p>
-                <h4>Measurements</h4>
-                <p>Chest: {product.modelBodyMeasurements.chest}, Waist: {product.modelBodyMeasurements.waist}, Hips: {product.modelBodyMeasurements.hips}</p>
+                <p>Our model is wearing a size {product.sizeOfModelsGarment}</p>
+                <p>Measurements: Chest: {product.modelBodyMeasurements.chest}, Waist: {product.modelBodyMeasurements.waist}, Hips: {product.modelBodyMeasurements.hips}, Height: {product.modelBodyMeasurements.height}</p>
+
                 <h4>Material</h4>
-                <p>{product.fabricMaterial}</p>
+                {product.fabricMaterial.map((material, index) => (
+                  <p key={index}>{material.percentage}% {material.material}</p>
+                ))}
+
                 <h4>Clothing Measurements</h4>
-                <p>Chest: {product.measurements.chest}, Waist: {product.measurements.waist}, Hips: {product.measurements.hips}</p>
+                {product.measurements.chest && <p>Chest: {product.measurements.chest}</p>}
+                {product.measurements.waist && <p>Waist: {product.measurements.waist}</p>}
+                {product.measurements.hips && <p>Hips: {product.measurements.hips}</p>}
+                <p>Garment Length: {product.garmentLength}</p>
+
                 <h4>Delivery</h4>
                 <p>This item is sent directly from our partner and will arrive separately if ordered with other items.</p>
               </div>
@@ -350,23 +481,21 @@ useEffect(() => {
           </Col>
           
       </Row>
-<div className="my-3 product-reviews">
+{/* <div className="my-3 product-reviews">
 
   
-  {/* Always display the rating and number of reviews */}
   <ListGroup.Item>
   <div className="review-summary">
     <Rating rating={product.rating} />
     {typeof product.numReviews === 'number' ? (
       <span>{`${product.numReviews} review${product.numReviews !== 1 ? 's' : ''}`}</span>
     ) : (
-      // Temporarily render a different text to see if this is the place causing the issue.
+      
       <span>No reviews available</span>
     )}
 
   </div>
     </ListGroup.Item>
-      {/* Display each review in the list */}
       {product.reviews.map((review) => (
         <ListGroup.Item key={review._id}>
           <strong>{review.name}</strong>
@@ -437,7 +566,7 @@ useEffect(() => {
             )}
           </div>
 
-      </div>
+      </div> */}
     </div>
   );
 }

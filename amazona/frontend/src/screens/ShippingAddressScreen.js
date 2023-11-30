@@ -20,6 +20,8 @@ export default function ShippingAddressScreen() {
   const [postalCode, setPostalCode] = useState(
     shippingAddress.postalCode || ''
   );
+
+
   useEffect(() => {
     if (!userInfo) {
       navigate('/signin?redirect=/shipping');
@@ -52,13 +54,32 @@ export default function ShippingAddressScreen() {
     );
     navigate('/placeorder');
   };
-  useEffect(() => {
+useEffect(() => {
   if (shippingAddress.location) {
-    // Assuming location is an object with lat and lng properties
     console.log('Location updated:', shippingAddress.location);
-    // You can also set local states here if needed
+
+    setAddress(shippingAddress.location.name || '');
+    setCity(shippingAddress.location.vicinity || '');
+
+    const addressParts = shippingAddress.location.address.split(', ');
+
+    // Assuming the postal code is in the second last part of the address
+    // e.g., "Casuarina WA 6167"
+    if (addressParts.length >= 3) {
+      const statePostalPart = addressParts[addressParts.length - 2];
+      const postalCodePart = statePostalPart.split(' ').pop();
+      setPostalCode(postalCodePart);
+
+      const countryPart = addressParts[addressParts.length - 1];
+      setCountry(countryPart.trim());
+    } else {
+      setPostalCode('');
+      setCountry('');
+    }
   }
 }, [shippingAddress.location]);
+
+
 
 
 
@@ -120,7 +141,7 @@ export default function ShippingAddressScreen() {
               required
             />
           </Form.Group>
-          {/* <div className="mb-3">
+          <div className="mb-3">
             <Button
               id="chooseOnMap"
               type="button"
@@ -137,7 +158,7 @@ export default function ShippingAddressScreen() {
             ) : (
               <div>No location</div>
             )}
-          </div> */}
+          </div>
 
           <div className="mb-3">
             <Button className="shipping"variant="primary" type="submit">

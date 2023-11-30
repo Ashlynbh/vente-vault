@@ -3,10 +3,11 @@ import bcrypt from 'bcryptjs';
 import expressAsyncHandler from 'express-async-handler';
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
-import { isAuth, isAdmin, generateToken, baseUrl, generateAndSaveDiscountCode } from '../utils.js';
+import { isAuth, isAdmin, generateToken, baseUrl } from '../utils.js';
 import dotenv from 'dotenv';
 import DiscountCode from '../models/discountCodes.js';
 import ExpressionOfInterest from '../models/expressionofinterestModel.js';
+import mongoose from 'mongoose';
 dotenv.config();
 
 
@@ -153,20 +154,38 @@ userRouter.post('/mailjet/add-email', async (req, res) => {
     }
 
     try {
-        const mail = await initializeMailjet(); // Initialize the Mailjet client
-        
-        // Save the email to Mailjet
-        await mail.post('contact', { version: 'v3' }).request({
+        const mailjet = await initializeMailjet(); // Initialize the Mailjet client
+        const LIST_ID = '10318678'; // Replace with your actual Mailjet list ID
+
+        // Save the email to Mailjet contacts
+        await mailjet.post('contact', { version: 'v3' }).request({
             Email: email,
-            IsExcludedFromCampaigns: 'false',
-            Name: email.split('@')[0] // Use the part before the "@" as a simple name
+            Name: email.split('@')[0],
         });
 
-        // Generate discount code
-        const discountCode = await generateAndSaveDiscountCode(); // Removed the someValue argument
+        // Add the contact to a specific list
+        await mailjet.post('listrecipient', { version: 'v3' }).request({
+            ContactAlt: email,
+            ListID: LIST_ID,
+            IsActive: true
+        });
 
-        // Send discount code to the user
-        await mail.post('send', { version: 'v3.1' }).request({
+        // Attempt to save the email to Mailjet contacts
+        try {
+            await mailjet.post('contact', { version: 'v3' }).request({
+                Email: email,
+                Name: email.split('@')[0],
+            });
+        } catch (err) {
+            if (err.ErrorMessage.includes('already exists')) {
+                // Specific handling for email already subscribed
+                return res.status(400).json({ success: false, message: 'Email already subscribed.' });
+            }
+            throw err; // Rethrow the error if it's not the 'already exists' error
+        }
+        
+        // Send the welcome email and log the response
+        const sendResponse = await mailjet.post('send', { version: 'v3.1' }).request({
             Messages: [
                 {
                     From: {
@@ -176,48 +195,26 @@ userRouter.post('/mailjet/add-email', async (req, res) => {
                     To: [
                         {
                             Email: email,
-                            Name: email.split('@')[0], // Use the part before the "@" as a simple name
+                            Name: email.split('@')[0],
                         },
                     ],
-                    Subject: 'Welcome! Your Discount Code Inside!',
+                    Subject: 'Welcome!',
                     HTMLPart: `
-                        <p>Thank you for joining us! Here's your unique discount code: ${discountCode}</p>
-                        <p>Use this code at checkout to get your discount.</p>
+                        <p>Thank you for joining us! You are now on our mailing list and will receive exclusive information regarding upcoming sales and partnerships!</p>
                     `,
                 },
             ],
         });
 
-        res.json({ success: true, message: 'Added email and sent discount code successfully.' });
+        console.log('Send email response:', sendResponse.body); // Log the response from Mailjet
+
+        res.json({ success: true, message: 'Added email and sent email.' });
     } catch (err) {
         console.error(err.statusCode, err.message);
         res.status(500).json({ success: false, message: 'Error processing your request.' });
-        
     }
 });
 
-
-userRouter.post('/validate-discount',isAuth, async (req, res) => {
-    const { discountCode } = req.body;
-    const userId = req.user._id;  
-
-    try {
-        const foundCode = await DiscountCode.findOne({ code: discountCode, isActive: true });
-
-        if (!foundCode) {
-            res.status(400).json({ success: false, message: 'Invalid or expired discount code.' });
-            return;
-        }
-
-        if (foundCode.usedBy.includes(userId.toString())) {
-            res.status(400).json({ success: false, message: "You've already used this discount code." });
-            return;
-        }
-        res.json({ success: true, discountAmount: foundCode.value });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error.' });
-    }
-});
 
 userRouter.post('/use-discount', isAuth, async (req, res) => {
     const { discountCode } = req.body;
@@ -538,6 +535,75 @@ userRouter.post('/signup', expressAsyncHandler(async (req, res) => {
 
 
 
+
+
+userRouter.get('/brand-info/:userId', isAuth, isAdmin, expressAsyncHandler(async (req, res) => {
+  try {
+    // Access the user ID from the request parameters
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+
+    const brandInfo = await ExpressionOfInterest.findOne({ user: userId }).populate('user', 'name email');
+    if (brandInfo) {
+      res.send(brandInfo);
+    } else {
+      res.status(404).send({ message: 'Brand Information Not Found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Server Error' });
+  }
+}));
+
+
+
+userRouter.post('/send-brand-approval-email', isAuth, isAdmin, expressAsyncHandler(async (req, res) => {
+  const { userEmail, userName } = req.body;
+
+  const emailResult = await sendBrandApprovalEmail2(userName, userEmail);
+
+  if (emailResult.success) {
+    res.send({ message: emailResult.message });
+  } else {
+    res.status(500).send({ message: emailResult.message });
+  }
+}));
+
+// Assuming initializeMailjet function is already defined as per your previous setup
+
+const sendBrandApprovalEmail2 = async (userName, userEmail) => {
+  const mailjet = await initializeMailjet();
+
+  try {
+    const response = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: process.env.MAILJET_FROM_EMAIL,
+            Name: process.env.MAILJET_FROM_NAME
+          },
+          To: [
+            {
+              Email: userEmail,
+              Name: userName
+            }
+          ],
+          Subject: "Brand Approval Notification",
+          HTMLPart: `
+            <h3>Dear ${userName},</h3>
+            <p>Congratulations! Your brand has been approved. You can now access all the brand-specific features on our platform.</p>
+            <p>Thank you for being a part of our community,</p>
+            <p>The Team at [Your Company Name]</p>`
+        }
+      ]
+    });
+
+    console.log('Email sent:', response.body);
+    return { success: true, message: 'Email sent successfully' };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return { success: false, message: 'Failed to send email' };
+  }
+};
 
 
 

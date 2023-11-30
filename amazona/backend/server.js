@@ -8,6 +8,14 @@ import userRouter from './routes/userRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import uploadRouter from './routes/uploadRoutes.js';
 import instagramRouter from './routes/instagramRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+
+
+
+
 
 
 dotenv.config();
@@ -46,6 +54,9 @@ app.use('/api/orders', orderRouter);
 app.use((err, req, res, next) => {
   res.status(500).send({ message: err.message });
 });
+
+app.use('/invoices', express.static(path.join(__dirname, 'invoices')));
+
 
 const port = process.env.PORT || 5000;
 

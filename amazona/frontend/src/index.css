@@ -702,32 +702,57 @@ main {
   border:none;
 }
 
-.thumbnail {
-  width: 100px;
-  /* Fixed width */
-  height: 130px;
-  /* Fixed height */
-  padding: 0;
-  /* Remove padding to make the image fill the button */
-  border: none;
-  /* Removes border from the button */
-  background: none;
-  /* Removes background from the button */
-  overflow: hidden;
-  /* Ensures that the overflowing part of the image is hidden */
-  border-radius: 0;
-  /* No rounded edges */
-  margin-bottom: 5px;
-  /* Adds space between the thumbnails */
+.thumbnails {
+  position: relative;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.custom-slick-next,
+.custom-slick-prev {
+  position: absolute;
+  font-size: 1.6rem;
+  color: grey;
+  z-index: 10;
+  margin-left:15% ;
+}
+
+
+.slider-container {
+  position: relative;
+}
+
+
+.custom-slick-prev {
+  top: 0;
+  /* Align with the top of the container */
+  left: 10px;
+  /* Adjust as needed */
+}
+
+.custom-slick-next {
+  bottom: 0;
+  /* Align with the bottom of the container */
+  left: 10px;
+  /* Adjust as needed */
 }
 
 .product-thumbnail {
+  width: 100px;
+  height: 130px;
+  padding: 0;
+  border: none;
+  background: none;
+  overflow: hidden;
+  border-radius: 0;
+  margin-bottom: 5px;
+}
+
+
+.product-thumbnail {
   height: 100%;
-  /* Make the image fill the entire button */
   width: 100%;
-  /* Make the image fill the entire button */
   object-fit: cover;
-  /* Ensures the image covers the area of the button without stretching */
 }
 
 
@@ -1317,6 +1342,10 @@ button.thumbnail {
 
 /* //////DASHBOARD SCREEN///// */
 
+.dashboard-card:hover {
+  cursor: pointer;
+}
+
 
 .dashboard-row {
   margin-right: -15%;
@@ -1486,6 +1515,7 @@ button.thumbnail {
   background-color: var(--accent-colour_green);
   color: white;
 }
+
 
 
 .table-striped>tbody>tr:nth-of-type(odd) {
@@ -2253,6 +2283,48 @@ footer {
   display: block !important;
 }
 
+.getting-started-link{
+  color: var(--accent-colour_navy) !important;
+  padding: 2%;
+  padding-bottom: 0px;
+}
+
+.getting-started-link a {
+  color: var(--accent-colour_navy) !important;
+}
+
+.brand-guide-container {
+  margin: 50px auto;
+  width: auto;
+}
+
+.brand-guide-button {
+  border: 3px solid var(--accent-colour_green);
+  background-color: var(--accent-colour_cream);
+  text-transform: uppercase;
+  font-family: var(--body-font);
+  width: 100%;
+  transition: background-color 0.3s;
+  color: black;
+  font-weight: 700;
+  height:200px
+}
+
+.tag-remove-button {
+  background: none;
+  border: none;
+  color: #000;
+  /* or any color you prefer */
+  cursor: pointer;
+}
+
+
+.brand-guide-button:hover {
+  background-color:var(--accent-colour_green);
+  border-color: var(--accent-colour_cream);
+  color: white;
+}
+
     
 
 /* ///MEDIA QUERIES/// */
@@ -2537,6 +2609,37 @@ footer {
       /* Adjust based on content */
     }
 
+    .custom-slick-next-horizontal,
+    .custom-slick-prev-horizontal {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+    }
+
+    .custom-slick-prev-horizontal {
+      left: 10px;
+    }
+
+    .custom-slick-next-horizontal {
+      right: 10px;
+    }
+
+
+    .product-thumbnail {
+      width: 100px;
+      height: 120px;
+    }
+
+    .slick-track {
+      display: flex !important;
+      margin-top: 10px;
+    }
+    .slick-slide {
+      display: inline-block;
+      width: auto;
+      height: auto;
+    }
     .desktop {
       display: none !important;
     }
@@ -2588,7 +2691,7 @@ footer {
     }
 
     .join-us-section {
-     height: 30vh;
+     height: 40vh;
     }
 
 }

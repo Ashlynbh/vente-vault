@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useContext, useEffect, useReducer } from 'react';
+import React, { useContext, useEffect, useReducer, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
 import Row from 'react-bootstrap/Row';
@@ -14,6 +14,7 @@ import { getError } from '../utils';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
 import Button from 'react-bootstrap/Button';
+
 
 
 function reducer(state, action) {
@@ -84,6 +85,8 @@ export default function OrderScreen() {
   });
 
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
+  const [googleApiKey, setGoogleApiKey] = useState('');
+
 
   function createOrder(data, actions) {
     return actions.order
@@ -199,39 +202,26 @@ function onError(err) {
     successDeliver,
   ]);
 
-
-    const handleStripePayment = async () => {
+  useEffect(() => {
+    const fetchApiKey = async () => {
       try {
-        const { data } = await axios.post('/api/orders/create-stripe-checkout-session', order, {
-          headers: { authorization: `Bearer ${userInfo.token}` },
+        const { data } = await axios.get('/api/keys/google', {
+          headers: { Authorization: `BEARER ${userInfo.token}` },
         });
-
-        window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
+        setGoogleApiKey(data.key);
       } catch (error) {
-        console.error('Error redirecting to Stripe checkout:', error);
-
+        console.error('Error fetching Google API key:', error);
+        // Handle error appropriately
       }
     };
 
-
-  async function deliverOrderHandler() {
-    try {
-      dispatch({ type: 'DELIVER_REQUEST' });
-      const { data } = await axios.put(
-        `/api/orders/${order._id}/deliver`,
-        {},
-        {
-          headers: { authorization: `Bearer ${userInfo.token}` },
-        }
-      );
-      dispatch({ type: 'DELIVER_SUCCESS', payload: data });
-      toast.success('Order is delivered');
-    } catch (err) {
-      toast.error(getError(err));
-      dispatch({ type: 'DELIVER_FAIL' });
-      
+    if (userInfo) {
+      fetchApiKey();
     }
-  }
+  }, [userInfo]);
+
+
+
     
  
   return loading ? (
@@ -255,15 +245,15 @@ function onError(err) {
                     {order.shippingAddress.city}, {order.shippingAddress.postalCode},
                     {order.shippingAddress.country}
                     {order.shippingAddress.location && order.shippingAddress.location.lat && (
-                      <a
-                        className="order-map"
-                        target="_new"
-                        href={`https://maps.google.com?q=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}`}
-                      >
-                        View On Map
-                      </a>
+                      <div>
+                        <img
+                         src={`https://maps.googleapis.com/maps/api/staticmap?center=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}&zoom=13&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}&key=${googleApiKey}`}
+                         alt="Shipping Location"
+                        />
+                      </div>
                     )}
                   </Card.Text>
+
                   {order.isDelivered ? (
                     <MessageBox variant="success">
                       Shipped at {order.deliveredAt}

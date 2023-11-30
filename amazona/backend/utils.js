@@ -268,20 +268,20 @@ export const sendDeliveryEmail = async (order) => {
 
 // Sample function to generate and save discount code
 
-const generateAndSaveDiscountCode = async (value) => {
-    const code = 'WELCOME' + Math.floor(100000 + Math.random() * 900000).toString();  // Example code format: DISC123456
+// const generateAndSaveDiscountCode = async (value) => {
+//     const code = 'WELCOME' + Math.floor(100000 + Math.random() * 900000).toString();  // Example code format: DISC123456
 
-    const discountCode = new DiscountCode({
-        code: code,
-        value: 10,  // Value of the discount
-        type: 'percentage',  // Indicates that the discount is a percentage
-        isActive: true,
-    });
+//     const discountCode = new DiscountCode({
+//         code: code,
+//         value: 10,  // Value of the discount
+//         type: 'percentage',  // Indicates that the discount is a percentage
+//         isActive: true,
+//     });
 
-    await discountCode.save();
-    return code;  // Return the generated code
-};
+//     await discountCode.save();
+//     return code;  // Return the generated code
+// };
 
-export { generateAndSaveDiscountCode };
+// export { generateAndSaveDiscountCode };
 
 

@@ -14,6 +14,8 @@ import { toast } from 'react-toastify';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Col from 'react-bootstrap/esm/Col';
 import Row from 'react-bootstrap/esm/Row';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 
 const reducer = (state, action) => {
@@ -84,6 +86,7 @@ export default function NewProductScreen() {
   const initialFabricMaterial = [{ percentage: '', material: '' }];
   const [fabricMaterial, setFabricMaterials] = useState(initialFabricMaterial);
   const [product_tags, setProduct_tags] = useState('');
+  
   const [measurements, setMeasurements] = useState({});
   const [modelBodyMeasurements, setModelBodyMeasurements] = useState({ });
   const [sizeOfModelsGarment, setSizeOfModelsGarment] = useState('');
@@ -156,7 +159,7 @@ const submitHandler = async (publishStatus) => {
         featured,
         variations, 
         fabricMaterial, // Include the fabric materials in the request body
-        product_tags,
+        product_tags: selectedTags,
         measurements,
         modelBodyMeasurements,
         sizeOfModelsGarment,
@@ -420,6 +423,19 @@ const removeSize = (variationIndex, sizeIndex) => {
   setVariations(updatedVariations);
 };
 
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [currentTag, setCurrentTag] = useState('');
+
+  const handleAddTag = () => {
+    if (currentTag && !selectedTags.includes(currentTag)) {
+      setSelectedTags([...selectedTags, currentTag]);
+      setCurrentTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
+  };
 
 
 
@@ -505,17 +521,56 @@ setFabricMaterials(updatedMaterials);
                         </Form.Group>
                         {/* Occasion */}
                         <Form.Group className="mb-3" controlId="product_tags">
-                        <Form.Label className="form-title">Product Tags</Form.Label>
-                        <p className="product-small">Product tags will not directly be recorded on the product page, the intent is for users to use these as keyword searches for items.</p>
-                        <Form.Control
-                        className="product--edit-form"
-                            type="text"
-                            placeholder="Grunge"
-                            value={product_tags}s
-                            onChange={(e) => setProduct_tags(e.target.value)}
-                            required
-                        />
+                          <Form.Label className="form-title">Product Tags</Form.Label>
+                          <p className="product-small">
+                            Product tags will not directly be recorded on the product page, the intent is for users to use these as keyword searches for items.
+                          </p>
+                          <Form.Select value={currentTag} onChange={(e) => setCurrentTag(e.target.value)}>
+                            <option value="">Select a tag</option>
+                            {/* List all your options here */}
+                            <option value="Brides">Brides</option>
+                            <option value="Bridesmaid">Bridesmaid</option>
+                            <option value="Formal/Evening">Formal/Evening</option>
+                            <option value="Prom">Prom</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Festival">Festival</option>
+                            <option value="Holiday">Holiday</option>
+                            <option value="Modest">Modest</option>
+                            <option value="Party">Party</option>
+                            <option value="Active">Active</option>
+                            <option value="Beach">Beach</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Cocktail-party">Cocktail-party</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Grunge">Grunge</option>
+                            <option value="Lifestyle sport">Lifestyle sport</option>
+                            <option value="Smart casual">Smart casual</option>
+                            <option value="Streetwear">Streetwear</option>
+                            <option value="Wedding">Wedding</option>
+                            <option value="Wedding guest">Wedding guest</option>
+                            <option value="Workwear">Workwear</option>
+                            <option value="Sleepwear">Sleepwear</option>
+                            <option value="Underwear">Underwear</option>
+                          </Form.Select>
+                          <Button variant="primary"  className="add-material-btn" onClick={handleAddTag}>Add Tag</Button>
                         </Form.Group>
+
+                        {selectedTags.length > 0 && (
+                          <div>
+                            <h4 className="product-small">Selected Tags:</h4>
+                            <ul className="product-small">
+                              {selectedTags.map((tag, index) => (
+                                <li key={index}>
+                                  {tag}{' '}
+                                  <button onClick={() => handleRemoveTag(tag)} className="tag-remove-button">
+                                    <FontAwesomeIcon icon={faTimesCircle} />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      
 
                     <Form.Group className="mb-3" controlId="fabricMaterial">
                     <Form.Label className="form-title">Fabric/Material</Form.Label>
@@ -539,7 +594,13 @@ setFabricMaterials(updatedMaterials);
                                 required 
                             />
                             {index > 0 && (
-                                <button type="button" className="remove-material-btn" onClick={() => removeFabricMaterial(index)}>Remove</button>
+                          <button
+                            type="button"
+                            className="tag-remove-button"
+                            onClick={() => removeFabricMaterial(index)}
+                          >
+                            <FontAwesomeIcon icon={faTimesCircle} />
+                          </button>
                             )}
                         </div>
                     ))}
@@ -734,7 +795,7 @@ setFabricMaterials(updatedMaterials);
                             <div className="size-guide-image-preview">
                             <img src={sizeguide} alt="Size Guide" className="edit-thumbnail" />
                             <Button variant="danger" onClick={() => setSizeGuide('')}>
-                                <i className="fa fa-times-circle"></i> Remove
+                                <i className="fa fa-times-circle"></i>
                             </Button>
                             </div>
                         )}

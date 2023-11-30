@@ -77,7 +77,7 @@ export const ratings = [
 export default function SearchScreen() {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const sp = new URLSearchParams(search); // /search?category=Shirts
+  const sp = new URLSearchParams(search); 
   const category = sp.get('category') || 'all';
   const sub_category = sp.get('sub_category') || 'all';
   const query = sp.get('query') || 'all';
@@ -86,11 +86,13 @@ export default function SearchScreen() {
   const order = sp.get('order') || 'newest';
   const brand = sp.get('brand') || 'all'
   const page = sp.get('page') || 1;
+  const product_tags = sp.get('product_tags') || 'all';
 
   const [showDepartment, setShowDepartment] = useState(false);
   const [showClothingType, setShowClothingType] = useState(false);
   const [showPrice, setShowPrice] = useState(false);
-  const [showCustomerReview, setShowCustomerReview] = useState(false);
+  
+  // const [showCustomerReview, setShowCustomerReview] = useState(false);
   
   const handleToggle = (setStateFunction) => {
     if (window.innerWidth <= 767) { // Check if the screen width is 767px or less (mobile view)
@@ -108,6 +110,8 @@ export default function SearchScreen() {
       setShowFilters(false);
     }
   };
+
+  
 
   document.addEventListener('mousedown', handleClickOutside);
 
@@ -131,7 +135,7 @@ export default function SearchScreen() {
     const fetchData = async () => {
       try {
         const { data } = await axios.get(
-          `/api/products/search?page=${page}&query=${query}&category=${category}&sub_category=${sub_category}&price=${price}&rating=${rating}&order=${order}&brand=${brand}`
+          `/api/products/search?page=${page}&query=${query}&category=${category}&sub_category=${sub_category}&price=${price}&rating=${rating}&order=${order}&brand=${brand}&product_tags=${product_tags}`
         );
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
@@ -142,7 +146,7 @@ export default function SearchScreen() {
       }
     };
     fetchData();
-  }, [category, sub_category, error, order, page, price, query, rating,brand]);
+  }, [category, sub_category, error, order, page, price, query, rating,brand, product_tags]);
 
   const [categories, setCategories] = useState([]);
   useEffect(() => {
@@ -182,8 +186,10 @@ export default function SearchScreen() {
     const filterPrice = filter.price || price;
     const sortOrder = filter.order || order;
     const filterBrand = filter.brand || brand;
-    return `/search?category=${filterCategory}&sub_category=${filterSubcategory}&query=${filterQuery}&price=${filterPrice}&rating=${filterRating}&brand=${filterBrand}&order=${sortOrder}&page=${filterPage}`;
+    const filterTag = filter.product_tags|| product_tags;
+    return `/search?category=${filterCategory}&sub_category=${filterSubcategory}&query=${filterQuery}&price=${filterPrice}&rating=${filterRating}&brand=${filterBrand}&order=${sortOrder}&page=${filterPage}&product_tags=${filterTag}`;
 };
+
 
   return (
     <div>
@@ -354,7 +360,7 @@ export default function SearchScreen() {
               </ul>
             </div>
             <div>
-            <h3 className="search-header" onClick={() => handleToggle(setShowCustomerReview)}>
+            {/* <h3 className="search-header" onClick={() => handleToggle(setShowCustomerReview)}>
               Avg. Customer Review<span className="toggle-arrow">
             <FontAwesomeIcon icon={showCustomerReview ? faAngleUp : faAngleDown} />
           </span>
@@ -371,8 +377,8 @@ export default function SearchScreen() {
                     </Link>
                   </li>
                 ))}
-                <li>
-                  <Link
+                <li> */}
+                  {/* <Link
                     to={getFilterUrl({ rating: 'all' })}
                     className={rating === 'all' ? 'text-bold' : ''}
                   >
@@ -380,8 +386,8 @@ export default function SearchScreen() {
                   </Link>
                 </li>
               </ul>
-            )}
-            <ul className="search-items desktop">
+            )} */}
+            {/* <ul className="search-items desktop">
                 {ratings.map((r) => (
                   <li key={r.name}>
                     <Link
@@ -400,7 +406,7 @@ export default function SearchScreen() {
                     <Rating caption={' & up'} rating={0}></Rating>
                   </Link>
                 </li>
-              </ul>
+              </ul> */}
             </div>
           </Col>
           <Col md={9}>
@@ -422,7 +428,7 @@ export default function SearchScreen() {
                       {brand !== 'all' && ` : Brand - ${brand}`}
                       {query !== 'all' ||
                       category !== 'all' ||
-                      rating !== 'all' ||
+                      // rating !== 'all' ||
                       
                       price !== 'all' ? (
 
@@ -446,7 +452,7 @@ export default function SearchScreen() {
                       <option value="newest">Newest Arrivals</option>
                       <option value="lowest">Price: Low to High</option>
                       <option value="highest">Price: High to Low</option>
-                      <option value="toprated">Avg. Customer Reviews</option>
+                      {/* <option value="toprated">Avg. Customer Reviews</option> */}
                     </select>
                   </Col>
                 </Row>

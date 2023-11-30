@@ -49,27 +49,45 @@ export default function OrderListScreen() {
       error: '',
     });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/orders`, {
-          headers: { Authorization: `Bearer ${userInfo.token}` },
-        });
-        dispatch({ type: 'FETCH_SUCCESS', payload: data });
-      } catch (err) {
-        dispatch({
-          type: 'FETCH_FAIL',
-          payload: getError(err),
-        });
-      }
-    };
-    if (successDelete) {
-      dispatch({ type: 'DELETE_RESET' });
-    } else {
-      fetchData();
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      dispatch({ type: 'FETCH_REQUEST' });
+
+      // Fetch orders
+      const { data: ordersData } = await axios.get(`/api/orders`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      console.log('Fetched Orders:', ordersData); // Log the orders data
+
+      // Fetch dispatch times
+      const { data: dispatchTimes } = await axios.get(`/api/orders/dispatch-times`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      console.log('Fetched Dispatch Times:', dispatchTimes); // Log the dispatch times data
+
+      // Merging orders with dispatch times
+      const ordersWithDispatchTimes = ordersData.map(order => ({
+        ...order,
+        dispatchTime: dispatchTimes[order._id]
+      }));
+
+      console.log('Orders with dispatch times:', ordersWithDispatchTimes); // Log the merged data
+
+      dispatch({ type: 'FETCH_SUCCESS', payload: ordersWithDispatchTimes });
+    } catch (err) {
+      console.error('Error fetching data:', err); // Log any errors
+      dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
     }
-  }, [userInfo, successDelete]);
+  };
+
+  if (successDelete) {
+    dispatch({ type: 'DELETE_RESET' });
+  } else {
+    fetchData();
+  }
+}, [userInfo, successDelete]);
+
 
   // Convert to CSV
     const convertToCSV = (orders) => {
@@ -162,7 +180,11 @@ export default function OrderListScreen() {
                 <td>{order.totalPrice.toFixed(2)}</td>
                 <td>{order.isPaid ? order.paidAt.substring(0, 10) : 'No'}</td>
                 <td>
-                  {getDeliveryStatusForUser(order)}
+                {getDeliveryStatusForUser(order)}
+                  {/* Check if dispatchTime exceeds 24 hours (1440 minutes) and display a warning icon with minutes */}
+                  {order.dispatchTime > 1440 && (
+                    <span className="warning-icon">⚠️ ({order.dispatchTime} mins)</span>
+                  )}
                 </td>
                 <td>
                   <Button

@@ -48,6 +48,8 @@ import Footer from './components/Footer';
 import ContactScreen from './screens/ContactScreen';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingCart, faUser, faTools,faAngleUp, faAngleDown} from '@fortawesome/free-solid-svg-icons';
+import BrandGuideScreen from './screens/BrandGuideScreen';
+import FinanceScreen from './screens/FinanceScreen';
 
  
 function App() {
@@ -348,6 +350,9 @@ useEffect(() => {
                                 <LinkContainer to="/admin/orders">
                                   <NavDropdown.Item>Orders</NavDropdown.Item>
                                 </LinkContainer>
+                                <LinkContainer to="/admin/finance">
+                                  <NavDropdown.Item>Finance</NavDropdown.Item>
+                                </LinkContainer>
                                 {userInfo.isAdmin && (
                                   <LinkContainer to="/admin/users">
                                     <NavDropdown.Item>Users</NavDropdown.Item>
@@ -434,6 +439,9 @@ useEffect(() => {
                                 </LinkContainer>
                                 <LinkContainer to="/admin/orders">
                                   <NavDropdown.Item>Orders</NavDropdown.Item>
+                                </LinkContainer>
+                                <LinkContainer to="/admin/finance">
+                                  <NavDropdown.Item>Finance</NavDropdown.Item>
                                 </LinkContainer>
                                 {userInfo.isAdmin && (
                                   <LinkContainer to="/admin/users">
@@ -532,6 +540,14 @@ useEffect(() => {
                 }
               ></Route>
                <Route
+                path="/admin/finance"
+                element={
+                  <BrandAdmin>
+                    <FinanceScreen />
+                  </BrandAdmin>
+                }
+              ></Route>
+               <Route
                 path="/admin/socials"
                 element={
                   <AdminRoute>
@@ -568,6 +584,14 @@ useEffect(() => {
                 element={
                   <BrandAdmin>
                     <ProductEditScreen />
+                  </BrandAdmin>
+                }
+              ></Route>
+               <Route
+                path="/admin/guide"
+                element={
+                  <BrandAdmin>
+                    <BrandGuideScreen />
                   </BrandAdmin>
                 }
               ></Route>

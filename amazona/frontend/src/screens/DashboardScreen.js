@@ -8,6 +8,7 @@ import MessageBox from '../components/MessageBox';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
+import { Link } from 'react-router-dom';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -53,6 +54,12 @@ export default function DashboardScreen() {
     fetchData();
   }, [userInfo]);
 
+  const formatDispatchTime = (totalMinutes) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours} hours, ${minutes} mins`;
+};
+
 return (
     <div className="dashboard-container">
       {loading ? (
@@ -61,38 +68,59 @@ return (
         <MessageBox variant="danger">{error}</MessageBox>
       ) : (
         <>
+        <div className="getting-started-link">
+          <Link to="/admin/guide" style={{ textDecoration: 'underline' }}>Getting Started Guide</Link>
+        </div>
         {/* First Row of Cards */}
         <Row className="dashboard-row">
           {[
-            { title: 'Users', amount: summary.users ? summary.users.numUsers : 0, icon: 'fas fa-users' },
-            { title: 'Orders', amount: summary.orders ? summary.orders.numOrders : 0, icon: 'fas fa-shopping-cart' },
-            { title: 'Sales', amount: `$${summary.orders ? summary.orders.totalSales.toFixed(2) : 0}`, icon: 'fas fa-dollar-sign' },
-            { title: 'Avg Rating', amount: '', icon: 'fas fa-star' },
-            {title: 'Dispatch Time',
-              // Calculate average dispatch time for admin or specific time for a brand
-              amount: userInfo.isAdmin ?
-                `${summary.brandDispatchSummary.reduce((acc, cur) => acc + cur.averageDispatchTime, 0) / summary.brandDispatchSummary.length} days`
-                :
-                `${summary.brandDispatchSummary.find(entry => entry._id.toString() === userInfo._id)?.averageDispatchTime || 'N/A'} days`,
-              icon: 'fas fa-truck'
+               { 
+              title: 'Outstanding Orders', 
+              amount: summary.paidNotDeliveredOrdersCount ? summary.paidNotDeliveredOrdersCount : 0, 
+              icon: 'fas fa-exclamation-triangle',
+              description: 'Count of orders that have been paid and have not been dispatched'
+            },
+           { title: 'Users', amount: summary.users ? summary.users.uniqueUsers : 0, icon: 'fas fa-users',
+          description: 'Count of unique users who have purchased orders' },
+
+            { title: 'Orders', amount: summary.orders ? summary.orders.numOrders : 0, icon: 'fas fa-shopping-cart',
+           description: 'Count of total orders'  },
+            { title: 'Sales', amount: `$${summary.orders ? summary.orders.totalSales.toFixed(2) : 0}`, icon: 'fas fa-dollar-sign',
+          description: 'Sum of total sales'  },
+
+            {
+              title: 'Dispatch Time',
+              amount: userInfo.isAdmin ? (
+                Array.isArray(summary.brandDispatchSummary) ?
+                  formatDispatchTime(summary.brandDispatchSummary.reduce((acc, cur) => acc + cur.average, 0) / summary.brandDispatchSummary.length || 0) :
+                  'N/A' // Fallback if not an array
+              ) : (
+                typeof summary.brandDispatchSummary === 'object' ?
+                  formatDispatchTime(summary.brandDispatchSummary[userInfo._id]?.average || 0) :
+                  'N/A' // Fallback if not an object or undefined
+              ),
+              icon: 'fas fa-truck',
+              description: 'Average time between payment and shipment'
             }
+
+
           ].map((card, index) => (
-               <Col xs={12} sm={6} md={4} lg={3} xl={2} key={index}>
-            <Card className="dashboard-card">
-                <Card.Body className="card-body-flex">
-                    <i className={`${card.icon} dashboard-card-icon`}></i>
-                    <div>
+                 <Col xs={12} sm={6} md={4} lg={3} xl={2} key={index}>
+                  <Card className="dashboard-card" title={card.description}> {/* Add title here */}
+                    <Card.Body className="card-body-flex">
+                      <i className={`${card.icon} dashboard-card-icon`}></i>
+                      <div>
                         <Card.Text className="dashboard-card-text">
-                            {card.title}
+                          {card.title}
                         </Card.Text>
                         <Card.Title className="dashboard-card-title">
-                            {card.amount}
+                          {card.amount}
                         </Card.Title>
-                    </div>
-                </Card.Body>
-            </Card>
-        </Col>
-          ))}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
         </Row>
 
 

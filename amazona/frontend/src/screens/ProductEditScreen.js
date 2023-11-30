@@ -13,6 +13,9 @@ import { toast } from 'react-toastify';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Col from 'react-bootstrap/esm/Col';
 import Row from 'react-bootstrap/esm/Row';
+import Table from 'react-bootstrap/Table';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 
 const reducer = (state, action) => {
@@ -67,33 +70,56 @@ export default function ProductEditScreen() {
     });
 
 
+
+    // State hooks for product fields
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState('');
-  const [images, setImages] = useState([]);
   const [category, setCategory] = useState('');
   const [sub_category, setSubcategory] = useState('');
-  const [countInStock, setCountInStock] = useState('');
   const [brand, setBrand] = useState('');
   const [description, setDescription] = useState('');
-  const [featured, setFeatured] = useState('');
-  const [isPublished, setIsPublished] = useState(false);
-  const [variations, setVariations] = useState([]);
-  const [fabricMaterial, setFabricMaterial] = useState('');
-  const [occasion, setOccasion] = useState('');
-  const [measurements, setMeasurements] = useState({ chest: 0, waist: 0, hips: 0 });
-  const [modelBodyMeasurements, setModelBodyMeasurements] = useState({ chest: 0, waist: 0, hips: 0 });
+  const [featured, setFeatured] = useState(false);
+  const [reducedPrice, setReducedPrice] = useState('');
+  const [images, setImages] = useState([]);
+  const [countInStock, setCountInStock] = useState('');
+  const initialFabricMaterial = [{ percentage: '', material: '' }];
+  const [fabricMaterial, setFabricMaterials] = useState(initialFabricMaterial);
+  const [product_tags, setProduct_tags] = useState('');
+  const [measurements, setMeasurements] = useState({});
+  const [modelBodyMeasurements, setModelBodyMeasurements] = useState({ });
   const [sizeOfModelsGarment, setSizeOfModelsGarment] = useState('');
-  const [garmentLength, setGarmentLength] = useState(0);
-  const [heightRise, setHeightRise] = useState(0);
+  const [garmentLength, setGarmentLength] = useState({});
   const [createdBy, setCreatedBy] = useState('');
+  const [isPublished, setIsPublished] = useState(false);
+  const [sizeguide, setSizeGuide] = useState(false);
   const [showInstagramLinkForm, setShowInstagramLinkForm] = useState(false);
   const [instagramPostIds, setInstagramPostIds] = useState([]);
   const [currentInstagramPostId, setCurrentInstagramPostId] = useState('');
-  const [reducedPrice, setReducedPrice] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [currentTag, setCurrentTag] = useState('');
 
-  // const [weight, setWeight] = useState(0);
+  
+ const initialVariation = {
+  color: '',
+  colourhex: '',
+  sizes: [{ size: '', countInStock: 0 }]
+};
+
+const [variations, setVariations] = useState([initialVariation]);
+  const [colorSizes, setColorSizes] = useState([
+{
+    color: '',
+    colorImage: '',
+    colourhex: '',
+    sizes: [{ size: '', countInStock: 0 }],
+},
+// Add more objects if needed
+]);
+
+
+
 
 
 
@@ -101,11 +127,13 @@ function extractFileName(url) {
   return url.split('/').pop();
 }
 
- useEffect(() => {
+useEffect(() => {
   const fetchData = async () => {
     try {
       dispatch({ type: 'FETCH_REQUEST' });
       const { data } = await axios.get(`/api/products/${productId}`);
+
+      // Set fields with fetched data
       setName(data.name);
       setSlug(data.slug);
       setPrice(data.price);
@@ -117,21 +145,25 @@ function extractFileName(url) {
       setDescription(data.description);
       setFeatured(data.featured);
       setIsPublished(data.isPublished);
-      setVariations(data.variations || []);
-      // New fields
-      setFabricMaterial(data.fabricMaterial || '');
-      setOccasion(data.occasion || '');
-      setMeasurements(data.measurements);
-      setModelBodyMeasurements(data.modelBodyMeasurements);
-      setSizeOfModelsGarment(data.sizeOfModelsGarment || '');
-      setGarmentLength(data.garmentLength || 0);
       setReducedPrice(data.reducedPrice || '');
-      setHeightRise(data.heightRise || 0);
+      setCountInStock(data.countInStock || '');
+      setProduct_tags(data.product_tags || '');
+      setMeasurements(data.measurements || {});
+      setModelBodyMeasurements(data.modelBodyMeasurements || {});
+      setSizeOfModelsGarment(data.sizeOfModelsGarment || '');
+      setGarmentLength(data.garmentLength || {});
       setCreatedBy(data.createdBy);
-      setCurrentInstagramPostId('');
+      setSizeGuide(data.sizeguide || false);
       setShowInstagramLinkForm(false);
       setInstagramPostIds(data.instagramPostIds || []);
-      
+      setCurrentInstagramPostId('');
+      setSelectedTags(data.product_tags || []);
+
+      // Set fabric material and variations with data from the database
+      setFabricMaterials(data.fabricMaterial || [{ percentage: '', material: '' }]);
+      setVariations(data.variations || [initialVariation]);
+
+
       dispatch({ type: 'FETCH_SUCCESS' });
     } catch (err) {
       dispatch({
@@ -140,75 +172,122 @@ function extractFileName(url) {
       });
     }
   };
+
   fetchData();
-}, [productId, dispatch]); // Add dispatch to the dependency array if you use it in the useEffect
+}, [productId, dispatch]);
+
+
+  const handleFabricMaterialChange = (index, field, value) => {
+  const updatedMaterials = fabricMaterial.map((item, i) => {
+    if (i === index) {
+      return { ...item, [field]: value };
+    }
+    return item;
+  });
+  setFabricMaterials(updatedMaterials);
+};
+
+const validateFabricMaterials = () => {
+  // Ensure at least the first entry is complete
+  const firstMaterial = fabricMaterial[0];
+  return firstMaterial && firstMaterial.percentage && firstMaterial.material;
+};
 
 
 
+  const submitHandler = async (publishStatus) => {
+  setIsPublished(publishStatus);
 
-    const submitHandler = async (e) => {
-  e.preventDefault();
-
-  // Validation: Check if there's at least one variation with a size and stock count
-  const hasValidVariation = variations.some(variation =>
-    variation.sizes.some(size => size.size && size.countInStock > 0)
-  );
-
-  if (!hasValidVariation) {
-    toast.error('Please add at least one color, size, and stock count');
+  if (!validateFabricMaterials()) {
+    toast.error('Please provide at least one complete fabric material entry.');
     return;
   }
 
-  // Continue with the update request if validation passes
   try {
     dispatch({ type: 'UPDATE_REQUEST' });
-    await axios.put(
+    const response = await axios.put(
       `/api/products/${productId}`,
       {
-        _id: productId,
         name,
-        slug,
         price,
-        reducedPrice: reducedPrice !== '' ? reducedPrice : null, 
+        reducedPrice,
         image,
         images,
         category,
         sub_category,
         brand,
         countInStock,
+        isPublished: publishStatus,
         description,
         featured,
-        isPublished,
-        variations, 
+        variations,
         fabricMaterial,
-        occasion,
+        product_tags,
         measurements,
         modelBodyMeasurements,
         sizeOfModelsGarment,
         garmentLength,
-        heightRise,
         createdBy,
-        // weight,
+        sizeguide,
+        // Add any other fields that need to be updated
       },
       {
         headers: { Authorization: `Bearer ${userInfo.token}` },
       }
     );
-    dispatch({
-      type: 'UPDATE_SUCCESS',
-    });
+    dispatch({ type: 'UPDATE_SUCCESS' });
     toast.success('Product updated successfully');
-      navigate('/admin/products');
-    } catch (err) {
-      toast.error(getError(err));
-      dispatch({ type: 'UPDATE_FAIL' });
+    navigate('/admin/products');
+  } catch (err) {
+    dispatch({ type: 'UPDATE_FAIL', payload: getError(err) });
+    toast.error(getError(err));
+  }
+};
+
+const handlePublish = () => {
+  submitHandler(true);
+};
+
+const handleSaveDraft = () => {
+  submitHandler(false);
+};
+
+
+function extractFileName(url) {
+  if (!url) {
+    return ''; // or return some default value like 'No file selected'
+  }
+  return url.split('/').pop();
+}
+
+const dimensionTolerance = 0.1; // 10% tolerance
+const idealWidth = 1000;
+const idealHeight = 1333;
+
+const isWithinTolerance = (actual, ideal) => {
+  const lowerBound = ideal * (1 - dimensionTolerance);
+  const upperBound = ideal * (1 + dimensionTolerance);
+  return actual >= lowerBound && actual <= upperBound;
+};
+
+const uploadFileHandler = async (e, forImages) => {
+  const file = e.target.files[0];
+
+  // File size check
+  if (file.size > 5242880) { // 5 MB in bytes
+    toast.error("File size should be less than 5MB");
+    return;
+  }
+
+  // Resolution check
+  const image = new Image();
+  image.src = URL.createObjectURL(file);
+  image.onload = async () => {
+    if (!isWithinTolerance(image.width, idealWidth) || !isWithinTolerance(image.height, idealHeight)) {
+      toast.error(`Image dimensions should be close to ${idealWidth} x ${idealHeight} pixels.`);
+      return;
     }
-  };
-
-
-
-   const uploadFileHandler = async (e, forImages) => {
-    const file = e.target.files[0];
+    // Continue with upload after validation
     const bodyFormData = new FormData();
     bodyFormData.append('file', file);
     try {
@@ -226,15 +305,71 @@ function extractFileName(url) {
       } else {
         setImage(data.secure_url);
       }
-      toast.success('Image uploaded successfully. click Update to apply it');
+      toast.success('Image uploaded successfully.');
     } catch (err) {
       toast.error(getError(err));
       dispatch({ type: 'UPLOAD_FAIL', payload: getError(err) });
     }
   };
+  image.onerror = () => {
+    toast.error('Error loading image. Please try a different file.');
+  };
+};
 
-  const handleColorImageUpload = async (variationIndex, e) => {
+
+
+const handleColorImageUpload = async (variationIndex, e) => {
   const file = e.target.files[0];
+
+  // File size check
+  if (file.size > 5242880) { // 5 MB in bytes
+    toast.error("File size should be less than 5MB");
+    return;
+  }
+
+  // Resolution check
+  const image = new Image();
+  image.src = URL.createObjectURL(file);
+  image.onload = async () => {
+    if (!isWithinTolerance(image.width, idealWidth) || !isWithinTolerance(image.height, idealHeight)) {
+      toast.error(`Image dimensions should be close to ${idealWidth} x ${idealHeight} pixels.`);
+      return;
+    }
+
+    // Continue with upload after validation
+    const bodyFormData = new FormData();
+    bodyFormData.append('file', file);
+    try {
+      dispatch({ type: 'UPLOAD_REQUEST' });
+      const { data } = await axios.post('/api/upload', bodyFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+      dispatch({ type: 'UPLOAD_SUCCESS' });
+
+      const updatedVariations = [...variations];
+      updatedVariations[variationIndex].colorImage = data.secure_url; // Change 'image' to 'colorImage'
+      setVariations(updatedVariations);
+      toast.success('Colour image uploaded successfully');
+    } catch (err) {
+      toast.error(getError(err));
+      dispatch({ type: 'UPLOAD_FAIL', payload: getError(err) });
+    }
+  };
+};
+
+const uploadSizeGuideHandler = async (e) => {
+  const file = e.target.files[0];
+
+  // Basic file size check (adjust the size limit as needed)
+  if (file.size > 10485760) { // 10 MB in bytes
+    toast.error("File size should be less than 10MB");
+    return;
+  }
+
+  // Create FormData and append the file
   const bodyFormData = new FormData();
   bodyFormData.append('file', file);
 
@@ -248,10 +383,9 @@ function extractFileName(url) {
     });
     dispatch({ type: 'UPLOAD_SUCCESS' });
 
-    const updatedVariations = [...variations];
-    updatedVariations[variationIndex].colorImage = data.secure_url; // Change 'image' to 'colorImage'
-    setVariations(updatedVariations);
-    toast.success('Color image uploaded successfully');
+    // Assuming you have a state setter like setSizeGuideUrl to store the URL of the uploaded size guide image
+    setSizeGuide(data.secure_url);
+    toast.success('Size guide image uploaded successfully.');
   } catch (err) {
     toast.error(getError(err));
     dispatch({ type: 'UPLOAD_FAIL', payload: getError(err) });
@@ -259,21 +393,25 @@ function extractFileName(url) {
 };
 
 
-    // Add a new variation
-  const addVariation = () => {
-    const newVariation = {
-      color: '',
-      image: '',
-      sizes: [{ size: '', countInStock: 0 }]
-    };
-    setVariations([...variations, newVariation]);
-  };
 
-  // Remove a variation
+const addVariation = () => {
+  const newVariation = {
+    color: '',
+    colorImage: '',  // Changed from 'image' to 'colorImage'
+    colourhex: '',   // Added this field
+    sizes: [{ size: '', countInStock: 0 }]
+  };
+  setVariations([...variations, newVariation]);
+};
+
+
+// Remove a variation
   const removeVariation = (index) => {
     const newVariations = variations.filter((_, i) => i !== index);
     setVariations(newVariations);
   };
+
+  
 
   // Handle change in variation fields (color or image URL)
   const handleVariationChange = (variationIndex, field, value) => {
@@ -282,20 +420,12 @@ function extractFileName(url) {
     setVariations(updatedVariations);
   };
 
-  // Add a new size to a variation
   const addSize = (variationIndex) => {
-    const newSize = { size: '', countInStock: 0 };
-    const updatedVariations = [...variations];
-    updatedVariations[variationIndex].sizes.push(newSize);
-    setVariations(updatedVariations);
-  };
+  const updatedVariations = [...variations];
+  updatedVariations[variationIndex].sizes.push({ size: '', countInStock: 0 });
+  setVariations(updatedVariations);
+};
 
-  // Remove a size from a variation
-  const removeSize = (variationIndex, sizeIndex) => {
-    const updatedVariations = [...variations];
-    updatedVariations[variationIndex].sizes = updatedVariations[variationIndex].sizes.filter((_, i) => i !== sizeIndex);
-    setVariations(updatedVariations);
-  };
 
   const handleMeasurementsChange = (event, measurementKey) => {
     const updatedMeasurements = {
@@ -314,13 +444,44 @@ function extractFileName(url) {
 };
 
 
+  // Function to handle changes in color properties
+  const handleColorChange = (index, field, value) => {
+    const updatedColorSizes = [...colorSizes];
+    updatedColorSizes[index] = { ...updatedColorSizes[index], [field]: value };
+    setColorSizes(updatedColorSizes);
+  };
 
-  // Handle change in size fields
   const handleSizeChange = (variationIndex, sizeIndex, field, value) => {
-    const updatedVariations = [...variations];
-    updatedVariations[variationIndex].sizes[sizeIndex] = { ...updatedVariations[variationIndex].sizes[sizeIndex], [field]: value };
+    // First, check if the variation and size at given indices exist
+    if (variations[variationIndex] && variations[variationIndex].sizes[sizeIndex]) {
+      const updatedVariations = [...variations];
+      updatedVariations[variationIndex].sizes[sizeIndex] = { 
+        ...updatedVariations[variationIndex].sizes[sizeIndex], 
+        [field]: value 
+      };
+      setVariations(updatedVariations);
+    } else {
+      console.error("Variation or size not found");
+    }
+  };
+
+  const removeSize = (variationIndex, sizeIndex) => {
+    const updatedVariations = variations.map((variation, index) => {
+      if (index === variationIndex) {
+        // Remove the size at sizeIndex
+        return {
+          ...variation,
+          sizes: variation.sizes.filter((_, sIndex) => sIndex !== sizeIndex)
+        };
+      }
+      return variation;
+    });
+
     setVariations(updatedVariations);
   };
+
+
+
 
    const deleteFileHandler = async (fileName, f) => {
     console.log(fileName, f);
@@ -329,6 +490,19 @@ function extractFileName(url) {
     setImages(images.filter((x) => x !== fileName));
     toast.success('Image removed successfully. click Update to apply it');
   };
+
+    const addFabricMaterial = () => {
+    if (fabricMaterial.length < 3) {
+        setFabricMaterials([...fabricMaterial, { percentage: '', material: '' }]);
+    }
+    };
+
+    const removeFabricMaterial = (index) => {
+    const updatedMaterials = fabricMaterial.filter((_, i) => i !== index);
+    setFabricMaterials(updatedMaterials);
+    };
+
+
 
  const addInstagramPostId = (e) => {
     e.preventDefault();
@@ -353,6 +527,18 @@ const submitInstagramIdsHandler = async () => {
     console.error('Error updating Instagram Post IDs:', error);
   }
 };
+
+ const handleAddTag = () => {
+    if (currentTag && !selectedTags.includes(currentTag)) {
+      setSelectedTags([...selectedTags, currentTag]);
+      setCurrentTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
+  };
+
 
 
 
@@ -417,349 +603,503 @@ const submitInstagramIdsHandler = async () => {
   </>
 )}
 
-    {loading ? (
-      <LoadingBox></LoadingBox>
-    ) : error ? (
-      <MessageBox variant="danger">{error}</MessageBox>
-    ) : (
-      <Form onSubmit={submitHandler}>
-        <Row>
-          {/* First Column */}
-          <Col md={12} className="form-column">
-            {/* Name */}
-            <Form.Group className="mb-3" controlId="name">
-              <Form.Label className="form-title" >Name</Form.Label>
-              <Form.Control className="product--edit-form" value={name} onChange={(e) => setName(e.target.value)} required />
-            </Form.Group>
+   {loading ? (
+                <LoadingBox></LoadingBox>
+            ) : error ? (
+                <MessageBox variant="danger">{error}</MessageBox>
+            ) : (
+                <Form onSubmit={submitHandler}>
+                    {/* Product Details Section */}
+                <Row>
+                <Col md={6}>
+                        <div className="section-header">
+                            <span className="line product-details"></span>
+                            <h2>Product Details</h2>
+                            <span className="line product-details"></span>
+                            
+                        </div>
+                        <p className="product-lrg">Enter the essential details of the product here, and your responses will be recorded to users on the product page. Examples have been provided for each section as a guide.</p>
+                        <Form.Group className="mb-3" controlId="name">
+                        <Form.Label className="form-title" >Name</Form.Label>
+                        <Form.Control className="product--edit-form" placeholder="Leather Biker Jacket" value={name} onChange={(e) => setName(e.target.value)} required />
+                        </Form.Group>
 
-            {/* Slug */}
-            <Form.Group className="mb-3" controlId="slug">
-              <Form.Label className="form-title">Slug</Form.Label>
-              <Form.Control className="product--edit-form" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-            </Form.Group>
+                        {/* Brand */}
+                        <Form.Group className="mb-3" controlId="brand">
+                        <Form.Label className="form-title">Brand</Form.Label>
+                        <Form.Control className="product--edit-form" placeholder="Remi" value={brand} onChange={(e) => setBrand(e.target.value)} required />
+                        </Form.Group>
 
-            {/* Brand */}
-            <Form.Group className="mb-3" controlId="brand">
-              <Form.Label className="form-title">Brand</Form.Label>
-              <Form.Control className="product--edit-form" value={brand} onChange={(e) => setBrand(e.target.value)} required />
-            </Form.Group>
+                        {/* Description */}
+                        <Form.Group className="mb-3" controlId="description">
+                        <Form.Label className="form-title">Description</Form.Label>
+                        <Form.Control className="product--edit-form" placeholder="Embrace timeless style with our Classic Leather Biker Jacket, a must-have for any fashion-forward wardrobe. Crafted from premium quality, 100% genuine leather, this jacket boasts a luxurious feel and a durable finish that only gets better with age." as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
+                        </Form.Group>
 
-            {/* Description */}
-            <Form.Group className="mb-3" controlId="description">
-              <Form.Label className="form-title">Description</Form.Label>
-              <Form.Control className="product--edit-form" as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
-            </Form.Group>
+                        {/* Category */}
+                        <Form.Group className="mb-3" controlId="category">
+                        <Form.Label className="form-title">Category</Form.Label>
+                        <Form.Select  className="small-font-dropdown" value={category} onChange={(e) => setCategory(e.target.value)} required>
+                            <option value="">Select a Category</option>
+                            <option value="Men">Men</option>
+                            <option value="Women">Women</option>
+                            <option value="Kids">Kids</option>
+                            <option value="Accessories">Accessories</option>
+                        </Form.Select>
+                        </Form.Group>
 
-            {/* Price */}
-            <Form.Group className="mb-3" controlId="price">
-              <Form.Label className="form-title">Price</Form.Label>
-              <Form.Control className="product--edit-form" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="reduced-price">
-              <Form.Label className="form-title"> Reduced Price</Form.Label>
-              <Form.Control className="product--edit-form" type="number" value={reducedPrice} onChange={(e) => setReducedPrice(e.target.value)}/>
-            </Form.Group>
+                        {/* Sub-Category */}
+                        <Form.Group className="mb-3" controlId="subCategory">
+                        <Form.Label className="form-title">Sub-Category</Form.Label>
+                        <Form.Control className="product--edit-form" value={sub_category} onChange={(e) => setSubcategory(e.target.value)} required />
+                        </Form.Group>
+                        {/* Occasion */}
+                        
+                   <Form.Group className="mb-3" controlId="product_tags">
+                          <Form.Label className="form-title">Product Tags</Form.Label>
+                          <p className="product-small">
+                            Product tags will not directly be recorded on the product page, the intent is for users to use these as keyword searches for items.
+                          </p>
+                          <Form.Select value={currentTag} onChange={(e) => setCurrentTag(e.target.value)}>
+                            <option value="">Select a tag</option>
+                            {/* List all your options here */}
+                            <option value="Brides">Brides</option>
+                            <option value="Bridesmaid">Bridesmaid</option>
+                            <option value="Formal/Evening">Formal/Evening</option>
+                            <option value="Prom">Prom</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Festival">Festival</option>
+                            <option value="Holiday">Holiday</option>
+                            <option value="Modest">Modest</option>
+                            <option value="Party">Party</option>
+                            <option value="Active">Active</option>
+                            <option value="Beach">Beach</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Cocktail-party">Cocktail-party</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Grunge">Grunge</option>
+                            <option value="Lifestyle sport">Lifestyle sport</option>
+                            <option value="Smart casual">Smart casual</option>
+                            <option value="Streetwear">Streetwear</option>
+                            <option value="Wedding">Wedding</option>
+                            <option value="Wedding guest">Wedding guest</option>
+                            <option value="Workwear">Workwear</option>
+                            <option value="Sleepwear">Sleepwear</option>
+                            <option value="Underwear">Underwear</option>
+                          </Form.Select>
+                          <Button variant="primary"  className="add-material-btn" onClick={handleAddTag}>Add Tag</Button>
+                        </Form.Group>
 
-            {/* Category */}
-            <Form.Group className="mb-3" controlId="category">
-              <Form.Label className="form-title">Category</Form.Label>
-              <Form.Select  className="small-font-dropdown" value={category} onChange={(e) => setCategory(e.target.value)} required>
-                <option value="">Select a Category</option>
-                <option value="Men">Men</option>
-                <option value="Women">Women</option>
-                <option value="Kids">Kids</option>
-                <option value="Accessories">Accessories</option>
-              </Form.Select>
-            </Form.Group>
+                        {selectedTags.length > 0 && (
+                          <div>
+                            <h4 className="product-small">Selected Tags:</h4>
+                            <ul className="product-small">
+                              {selectedTags.map((tag, index) => (
+                                <li key={index}>
+                                  {tag}{' '}
+                                  <button onClick={() => handleRemoveTag(tag)} className="tag-remove-button">
+                                    <FontAwesomeIcon icon={faTimesCircle} />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
 
-            {/* Sub-Category */}
-            <Form.Group className="mb-3" controlId="subCategory">
-              <Form.Label className="form-title">Sub-Category</Form.Label>
-              <Form.Control className="product--edit-form" value={sub_category} onChange={(e) => setSubcategory(e.target.value)} required />
-            </Form.Group>
-
-           <Form.Group className="mb-3" controlId="imageFile">
-            <Form.Label className="form-title">Primary Image</Form.Label>
-            <Form.Control className="product--edit-form" type="file" onChange={uploadFileHandler} />
-            {/* Display image preview if `image` has a value */}
-            {image && (
-              <div className="image-preview">
-                <img src={image} alt="Primary" className="edit-thumbnail" />
-              </div>
-            )}
-            {loadingUpload && <LoadingBox></LoadingBox>}
-          </Form.Group>
-
-
-           <Form.Group className="mb-3" controlId="additionalImageFile">
-            <Form.Label className="form-title">Additional Images</Form.Label>
-            <Form.Control className="product--edit-form" type="file" onChange={(e) => uploadFileHandler(e, true)} />
-            {loadingUpload && <LoadingBox></LoadingBox>}
-            <div className="additional-images-preview">
-              {images.map((image, index) => (
-                <div key={index} className="additional-image-container">
-                  <img src={image} alt={`additional ${index}`} className="edit-thumbnail" />
-                  <Button variant="danger" onClick={() => deleteFileHandler(image)}>
-                    <i className="fa fa-times-circle"></i>
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </Form.Group>
-
-          
-            {/* Fabric/Material */}
-            <Form.Group className="mb-3" controlId="fabricMaterial">
-              <Form.Label className="form-title">Fabric/Material</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="text"
-                value={fabricMaterial}
-                onChange={(e) => setFabricMaterial(e.target.value)}
-                required
-              />
-            </Form.Group>
-            {/* <Form.Group className="mb-3" controlId="weight">
-              <Form.Label className="form-title"> Item Weight (in kg)</Form.Label>
-              <Form.Control 
-                type="number" 
-                value={weight} 
-                onChange={(e) => setWeight(e.target.value)} 
-                required 
-              />
-            </Form.Group> */}
-            {/* Occasion */}
-            <Form.Group className="mb-3" controlId="occasion">
-              <Form.Label className="form-title">Occasion</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="text"
-                value={occasion}
-                onChange={(e) => setOccasion(e.target.value)}
-                required
-              />
-            </Form.Group>
-
-            {/* Measurements Header */}
-              <h3 className="form-title">Measurements</h3>
-
-              {/* Chest Measurement */}
-              <Form.Group className="mb-3" controlId="measurementChest">
-                <Form.Label className="measurement-header">Chest (inches)</Form.Label>
-                <Form.Control
-                className="product--edit-form"
-                  type="number"
-                  value={measurements.chest}
-                  onChange={(e) => handleMeasurementsChange(e, 'chest')}
-                  required
-                />
-              </Form.Group>
-
-              {/* Waist Measurement */}
-              <Form.Group className="mb-3" controlId="measurementWaist">
-                <Form.Label className="measurement-header">Waist (inches)</Form.Label>
-                <Form.Control
-                className="product--edit-form"
-                  type="number"
-                  value={measurements.waist}
-                  onChange={(e) => handleMeasurementsChange(e, 'waist')}
-                  required
-                />
-              </Form.Group>
-              {/* Hips Measurement */}
-              <Form.Group className="mb-3" controlId="measurementHips">
-                <Form.Label className="measurement-header">Hips (inches)</Form.Label>
-                <Form.Control
-                className="product--edit-form"
-                  type="number"
-                  value={measurements.hips}
-                  onChange={(e) => handleMeasurementsChange(e, 'hips')}
-                  required
-                />
-              </Form.Group>
-            {/* Model's Body Measurements */}
-            <h3 className="form-title">Models Measurements</h3>
-            <Form.Group className="mb-3" controlId="modelChest">
-              <Form.Label className="measurement-header">Model's Chest (inches)</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="number"
-                value={modelBodyMeasurements.chest}
-                onChange={(e) => handleModelMeasurementsChange(e, 'chest')}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="modelWaist">
-              <Form.Label className="measurement-header">Model's Waist (inches)</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="number"
-                value={modelBodyMeasurements.waist}
-                onChange={(e) => handleModelMeasurementsChange(e, 'waist')}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="modelHips">
-              <Form.Label className="measurement-header">Model's Hips (inches)</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="number"
-                value={modelBodyMeasurements.hips}
-                onChange={(e) => handleModelMeasurementsChange(e, 'hips')}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="sizeOfModelsGarment">
-              <Form.Label className="form-title">Size of Model's Garment</Form.Label>
-              <Form.Select
-              
-                className="small-font-dropdown" 
-                aria-label="Size of Model's Garment"
-                value={sizeOfModelsGarment}
-                onChange={(e) => setSizeOfModelsGarment(e.target.value)}
-                required
-              >
-                <option value="">Select size</option>
-                <option value="XS">XS</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option>
-                <option value="XXXL">XXXL</option>
-              </Form.Select>
-            </Form.Group>
-
-
-            {/* Length/Height Rise */}
-            <Form.Group className="mb-3" controlId="garmentLength">
-              <Form.Label className="form-title">Garment Length</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="number"
-                value={garmentLength}
-                onChange={(e) => setGarmentLength(e.target.value)}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="heightRise">
-              <Form.Label className="form-title">Height Rise</Form.Label>
-              <Form.Control
-              className="product--edit-form"
-                type="number"
-                value={heightRise}
-                onChange={(e) => setHeightRise(e.target.value)}
-                required
-              />
-            </Form.Group>
-            {/* Featured - Only show if the user is an admin */}
-          {userInfo.isAdmin && (
-            <Form.Group className="mb-3" controlId="featured">
-              <Form.Label className="form-title">Featured</Form.Label>
-              <Form.Check
-                type="checkbox"
-                label="Is Featured"
-                checked={featured}
-                onChange={(e) => setFeatured(e.target.checked)}
-              />
-            </Form.Group>
-          )}
-
-            {/* Published */}
-            <Form.Group className="mb-3" controlId="isPublished">
-              <Form.Label className="form-title">Published</Form.Label>
-              <Form.Check type="checkbox" label="Is Published" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
-            </Form.Group>
-
-          </Col>
-        </Row>
-      <Row>
-          {/* Second Column */}
-          <Col md={12} className="form-column">
-            {variations.map((variation, index) => (
-              <div key={index}>
-                <Form.Group className="mb-3" controlId={`color-${index}`}>
-                  <Form.Label className="form-title" >Color</Form.Label>
-                  <Form.Control className="product--edit-form"  type="text" value={variation.color} onChange={(e) => handleVariationChange(index, 'color', e.target.value)} required />
+                    <Form.Group className="mb-3" controlId="fabricMaterial">
+                    <Form.Label className="form-title">Fabric/Material</Form.Label>
+                    <p className="product-small">Please ensure you record the material and the percentage for each fabric/material used.</p>
+                    {fabricMaterial.map((material, index) => (
+                        <div key={index} className="fabric-material-input-group">
+                            <input 
+                                type="number" 
+                                placeholder="70" 
+                                className="product--edit-form"
+                                value={material.percentage} 
+                                onChange={(e) => handleFabricMaterialChange(index, 'percentage', e.target.value)}
+                                required 
+                            />
+                            <input 
+                                type="text" 
+                                placeholder="Cotton" 
+                                className="product--edit-form"
+                                value={material.material} 
+                                onChange={(e) => handleFabricMaterialChange(index, 'material', e.target.value)}
+                                required 
+                            />
+                            {index > 0 && (
+                                <button
+                            type="button"
+                            className="tag-remove-button"
+                            onClick={() => removeFabricMaterial(index)}
+                          >
+                            <FontAwesomeIcon icon={faTimesCircle} />
+                          </button>
+                            )}
+                        </div>
+                    ))}
+                    {fabricMaterial.length < 3 && (
+                        <button type="button" className="add-material-btn" onClick={addFabricMaterial}>Add</button>
+                    )}
                 </Form.Group>
-                {/* Colour Hex input */}
-                <Form.Group className="mb-3" controlId={`colourhex-${index}`}>
-                  <Form.Label className="form-title" >Colour Hex</Form.Label>
-                  <Form.Control 
-                    className="product--edit-form"
-                    type="text" 
-                    placeholder="#ffffff" 
-                    value={variation.colourhex} 
-                    onChange={(e) => handleVariationChange(index, 'colourhex', e.target.value)} 
-                    required 
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId={`colorImageFile-${index}`}>
-                  <Form.Label className="form-title">Upload Color Image</Form.Label>
-                  <Form.Control  className="product--edit-form" type="file" onChange={(e) => handleColorImageUpload(index, e)} />
-                  {/* Display image from the database if it exists */}
-                  {variation.colorImage && (
-                    <div className="image-preview">
-                      <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="edit-thumbnail" />
+
+
+                        {/* Measurements Header */}
+                        <h3 className="form-title"> Garment's Measurements</h3>
+                        <p className="product-small">These measurements are an optional field, please leave this blank if you dont have these measurements.</p>
+
+                        {/* Chest Measurement */}
+                        <Form.Group className="mb-3" controlId="measurementChest">
+                            <Form.Label className="measurement-header">Chest (inches)</Form.Label>
+                            <Form.Control
+                            className="product--edit-form"
+                            type="number"
+                            value={measurements.chest}
+                            onChange={(e) => handleMeasurementsChange(e, 'chest')}
+                            required
+                            />
+                        </Form.Group>
+
+                        {/* Waist Measurement */}
+                        <Form.Group className="mb-3" controlId="measurementWaist">
+                            <Form.Label className="measurement-header">Waist (inches)</Form.Label>
+                            <Form.Control
+                            className="product--edit-form"
+                            type="number"
+                            value={measurements.waist}
+                            onChange={(e) => handleMeasurementsChange(e, 'waist')}
+                            required
+                            />
+                        </Form.Group>
+                        {/* Hips Measurement */}
+                        <Form.Group className="mb-3" controlId="measurementHips">
+                            <Form.Label className="measurement-header">Hips (inches)</Form.Label>
+                            <Form.Control
+                            className="product--edit-form"
+                            type="number"
+                            value={measurements.hips}
+                            onChange={(e) => handleMeasurementsChange(e, 'hips')}
+                            required
+                            />
+                        </Form.Group>
+                        {/* Model's Body Measurements */}
+                        <h3 className="form-title">Models Measurements</h3>
+                        <p className="product-small">These measurements are required, please record them or you will not be able to proceed.</p>
+                        <Form.Group className="mb-3" controlId="modelChest">
+                        <Form.Label className="measurement-header">Model's Chest (inches)</Form.Label>
+                        <Form.Control
+                        className="product--edit-form"
+                            type="number"
+                            value={modelBodyMeasurements.chest}
+                            onChange={(e) => handleModelMeasurementsChange(e, 'chest')}
+                            required
+                        />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3" controlId="modelWaist">
+                        <Form.Label className="measurement-header">Model's Waist (inches)</Form.Label>
+                        <Form.Control
+                        className="product--edit-form"
+                            type="number"
+                            placeholder="25"
+                            value={modelBodyMeasurements.waist}
+                            onChange={(e) => handleModelMeasurementsChange(e, 'waist')}
+                            required
+                        />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3" controlId="modelHips">
+                        <Form.Label className="measurement-header">Model's Hips (inches)</Form.Label>
+                        <Form.Control
+                        className="product--edit-form"
+                            type="number"
+                            placeholder="32"
+                            value={modelBodyMeasurements.hips}
+                            onChange={(e) => handleModelMeasurementsChange(e, 'hips')}
+                            required
+                        />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="modelHeight">
+                        <Form.Label className="measurement-header">Model's Height (cm)</Form.Label>
+                        <Form.Control
+                        className="product--edit-form"
+                            type="number"
+                            placeholder="173"
+                            value={modelBodyMeasurements.height}
+                            onChange={(e) => handleModelMeasurementsChange(e, 'height')}
+                            required
+                        />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3" controlId="sizeOfModelsGarment">
+                        <Form.Label className="form-title">Size of Model's Garment</Form.Label>
+                        <Form.Select
+                        
+                            className="small-font-dropdown" 
+                            aria-label="Size of Model's Garment"
+                            value={sizeOfModelsGarment}
+                            onChange={(e) => setSizeOfModelsGarment(e.target.value)}
+                            required
+                        >
+                            <option value="">Select size</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="XXXL">XXXL</option>
+                        </Form.Select>
+                        </Form.Group>
+
+
+                        {/* Length/Height Rise */}
+                        <Form.Group className="mb-3" controlId="garmentLength">
+                        <Form.Label className="form-title">Garment Length</Form.Label>
+                        <Form.Control
+                        className="product--edit-form"
+                            type="number"
+                            value={garmentLength}
+                            onChange={(e) => setGarmentLength(e.target.value)}
+                            required
+                        />
+                        </Form.Group>
+                </Col>
+
+                {/* Pricing and Images Section */}
+                <Col md={6}>
+                        <div className="section-header">
+                            <span className="line pricing"></span>
+                            <h2>Pricing</h2>
+                            <span className="line pricing"></span>
+                        </div>
+                         <p className="product-lrg">Please record the original price of the item and the reduced price, the reduced price will be the final price of the item which the customer will pay. The original price is only for display. Please ensure the reduced price is greater or equal to 30% otherwise you will not be able to proceed.</p>
+                        <Form.Group className="mb-3" controlId="price">
+                        <Form.Label className="form-title"> Original Price</Form.Label>
+                        <Form.Control placeholder="180"className="product--edit-form" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="reduced-price">
+                        <Form.Label className="form-title"> Reduced Price</Form.Label>
+                        <Form.Control placeholder="110" className="product--edit-form" type="number" value={reducedPrice} onChange={(e) => setReducedPrice(e.target.value)}/>
+                        </Form.Group>
+
+                        
+
+                        {/* Images */}
+                   <div className="section-header images-header">
+                            <span className="line images"></span>
+                            <h2>Images</h2>
+                            <span className="line images"></span>
                     </div>
-                  )}
-                </Form.Group>
-                {variation.sizes.map((size, sizeIndex) => (
-                  <div key={`size-${sizeIndex}`}>
-                    <Form.Group className="mb-3" controlId={`size-${index}-${sizeIndex}`}>
-                      <Form.Label className="form-title">Size</Form.Label>
-                      <Form.Select
-                        aria-label="Size"
-                        value={size.size}
-                        onChange={(e) => handleSizeChange(index, sizeIndex, 'size', e.target.value)}
-                        required
-                        className="small-font-dropdown" 
-                      >
-                        <option value="">Select size</option>
-                        <option value="XS">XS</option>
-                        <option value="S">S</option>
-                        <option value="M">M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
-                        <option value="XXXL">XXXL</option>
-                      </Form.Select>
+                     <p className="product-small"> Please ensure all images are the correct resolution and dimensions, to ensure consistency on our site we have set the dimensions to 1000 x 1333. Your primary image will be the first image users view and associate with your product. Please keep in mind you will be adding further images in the variations section.</p>
+                    <Form.Group className="mb-3" controlId="imageFile">
+                        <Form.Label className="form-title">Primary Image</Form.Label>
+                        <Form.Control className="product--edit-form" type="file" onChange={uploadFileHandler} />
+                        {/* Display image preview if `image` has a value */}
+                        {image && (
+                        <div className="image-preview">
+                            <img src={image} alt="Primary" className="edit-thumbnail" />
+                        </div>
+                        )}
+
                     </Form.Group>
-                    <Form.Group className="mb-3" controlId={`countInStock-${index}-${sizeIndex}`}>
-                          <Form.Label className="form-title">Count In Stock</Form.Label>
-                          <Form.Control className="product--edit-form"  type="number" value={size.countInStock} onChange={(e) => handleSizeChange(index, sizeIndex, 'countInStock', e.target.value)} required />
-                     </Form.Group>
-                    <Button variant="danger"className="remove-btn"  size="sm" onClick={() => removeSize(index, sizeIndex)}>
-                      Remove Size
-                    </Button>
-                  <Button variant="danger" className="remove-btn" size="sm" onClick={() => removeVariation(index)}>
-                Remove Color
-              </Button>
-                </div>
-              ))}
-              <Button size="sm"  className="add-btn" onClick={() => addSize(index)}>Add Size</Button>
+                    <Form.Group className="mb-3" controlId="additionalImageFile">
+                        <Form.Label className="form-title">Additional Images</Form.Label>
+                         <p className="product-small">Please add additional images that are not the primary image and are not associated with a colour as these will be recorded in the variations section. A minimum of 3 images is required with a maximum of 10.</p>
+                        <Form.Control className="product--edit-form" type="file" onChange={(e) => uploadFileHandler(e, true)} />
 
-            </div>
-          ))}
-          
-          <Button className="add-btn"  size="sm" onClick={addVariation}>Add Colour</Button>
-          
-        </Col>
+                        <div className="additional-images-preview">
+                        {images.map((image, index) => (
+                            <div key={index} className="additional-image-container">
+                            <img src={image} alt={`additional ${index}`} className="edit-thumbnail" />
+                            <Button variant="danger" onClick={() => deleteFileHandler(image)}>
+                                <i className="fa fa-times-circle"></i>
+                            </Button>
+                            </div>
+                        ))}
+                        </div>
+                    </Form.Group>   
+                    <Form.Group className="mb-3" controlId="sizeGuideImageFile">
+                         <p className="product-small">Please upload your size guide which will be displayed to users on the product page.</p>
+                        <Form.Label className="form-title">Size Guide Image</Form.Label>
+                        <Form.Control className="product--edit-form" type="file" onChange={uploadSizeGuideHandler} />
 
-     </Row>
-     <Row>
-          <div className="mb-3">
-            <Button type="submit" className="upload-button" disabled={loadingUpdate}>
-              Update
-            </Button>
-            {loadingUpdate && <LoadingBox></LoadingBox>}
-          </div>
-     </Row>
-      </Form>
-    )}
+                        {/* Optionally display the uploaded size guide image */}
+                        {sizeguide && (
+                            <div className="size-guide-image-preview">
+                            <img src={sizeguide} alt="Size Guide" className="edit-thumbnail" />
+                            <Button variant="danger" onClick={() => setSizeGuide('')}>
+                                <i className="fa fa-times-circle"></i>
+                            </Button>
+                            </div>
+                        )}
+                        </Form.Group>
+            
+
+                        {/* Featured - Only show if the user is an admin */}
+                    {userInfo.isAdmin && (
+                        <Form.Group className="mb-3" controlId="featured">
+                        <Form.Label className="form-title">Featured</Form.Label>
+                        <Form.Check
+                            type="checkbox"
+                            label="Is Featured"
+                            checked={featured}
+                            onChange={(e) => setFeatured(e.target.checked)}
+                        />
+                        </Form.Group>
+                    )}
+                    
+                </Col>
+                </Row>
+
+                {/* Quantity and Variations Section */}
+                <Row>
+                <Col md={12}>
+                    <div className="section-header">
+                        <span className="line quantity-variations"></span>
+                        <h2>Quantity and Variations</h2>
+                        <span className="line quantity-variations"></span>
+                    </div>
+                     <p className="product-lrg" > This is where you will record your quantity for specific colour and size variations, we recommend monitoring your stock as it will reduce with successful sales.</p>
+
+              <Table striped bordered hover>
+                <thead className="uppercase-headers">
+                    <tr>
+                    <th>Colour</th>
+                    <th>Colour Hex</th>
+                    <th>Colour Image</th>
+                    <th>Size</th> {/* Added Size header */}
+                    <th>Quantity</th>
+                    <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {variations.map((variation, variationIndex) => (
+                        variation.sizes.map((size, sizeIndex) => (
+                        <React.Fragment key={`variation-${variationIndex}-size-${sizeIndex}`}>
+                            <tr>
+                            {/* Color - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                    <Form.Select
+                                    value={variation.color}
+                                    onChange={(e) => handleVariationChange(variationIndex, 'color', e.target.value)}
+                                    required
+                                    >
+                                    <option value="">Select Color</option>
+                                    <option value="Black">Black</option>
+                                    <option value="White">White</option>
+                                    <option value="Grey">Grey</option>
+                                    <option value="Blue">Blue</option>
+                                    <option value="Red">Red</option>
+                                    <option value="Green">Green</option>
+                                    <option value="Yellow">Yellow</option>
+                                    <option value="Pink">Pink</option>
+                                    <option value="Navy">Navy</option>
+                                    <option value="Cream">Cream</option>
+                                    <option value="Brown">Brown</option>
+                                    <option value="Purple">Purple</option>
+                                    <option value="Orange">Orange</option>
+                                    <option value="Beige">Beige</option>
+                                    <option value="Lime">Lime</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Silver">Silver</option>
+                                    </Form.Select>
+                                </td>
+                                )}
+
+                            {/* Color Hex - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="#ffffff"
+                                    value={variation.colourhex}
+                                    onChange={(e) => handleVariationChange(variationIndex, 'colourhex', e.target.value)}
+                                    required
+                                />
+                                </td>
+                            )}
+
+                            {/* Color Image - Shown only for the first size of each color */}
+                            {sizeIndex === 0 && (
+                                <td rowSpan={variation.sizes.length + 1}>
+                                <Form.Group controlId={`colorImageFile-${variationIndex}`}>
+                                    <Form.Control 
+                                    className="product--edit-form" 
+                                    type="file" 
+                                    onChange={(e) => handleColorImageUpload(variationIndex, e)} 
+                                    />
+                                    {variation.colorImage && (
+                                    <div className="image-preview">
+                                        <img src={variation.colorImage} alt={`Color: ${variation.color}`} className="edit-thumbnail" />
+                                    </div>
+                                    )}
+                                </Form.Group>
+                                </td>
+                            )}
+
+                            {/* Size */}
+                            <td>
+                                <Form.Select
+                                aria-label="Size"
+                                value={size.size}
+                                onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'size', e.target.value)}
+                                required
+                                >
+                                <option value="">Select size</option>
+                                <option value="XS">XS</option>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                                <option value="XXXL">XXXL</option>
+                                </Form.Select>
+                            </td>
+
+                            {/* Quantity */}
+                            <td>
+                                <Form.Control
+                                type="number"
+                                value={size.countInStock}
+                                onChange={(e) => handleSizeChange(variationIndex, sizeIndex, 'countInStock', e.target.value)}
+                                required
+                                />
+                            </td>
+
+                            {/* Actions - Include Remove Size button for each size */}
+                            <td>
+                                <Button variant="danger" size="sm" onClick={() => removeSize(variationIndex, sizeIndex)}>
+                                Remove Size
+                                </Button>
+                            </td>
+                            </tr>
+
+                            {/* Row for adding new size - appears only once per color variation */}
+                            {sizeIndex === variation.sizes.length - 1 && (
+                            <tr>
+                                <td colSpan="6">
+                                <Button size="sm" className="add-btn" onClick={() => addSize(variationIndex)}>
+                                    Add Size
+                                </Button>
+                                </td>
+                            </tr>
+                            )}
+                        </React.Fragment>
+                        ))
+                    ))}
+                    </tbody>
+
+                </Table>
+
+                    <Button className="add-btn" size="sm" onClick={addVariation}>Add Variation</Button>
+               </Col>
+
+            </Row>
+            <button className="publish-button" type="button" onClick={handlePublish}>Publish</button>
+            <button className="sign-in-button" type="button" onClick={handleSaveDraft}>Save as Draft</button>
+        </Form>
+        )}
   </Container>
 )}; 

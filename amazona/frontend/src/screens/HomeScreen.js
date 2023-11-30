@@ -37,27 +37,6 @@ function HomeScreen() {
             products:[]
 });
 
-    const [email, setEmail] = useState(''); 
-
-    const handleEmailSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch('/api/users/mailjet/add-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert('Email added successfully!');
-                setEmail(''); 
-            } else {
-                alert('Error: ' + data.message);
-            }
-        } catch (error) {
-            console.error("There was an error adding the email.", error);
-        }
-    };
 
     // const [products,setProducts] = useState([]);
     useEffect(()=>{

@@ -48,7 +48,7 @@ const productSchema = new mongoose.Schema({
   percentage: { type: Number, required: true },
   material: { type: String, required: true }
 }],
-  product_tags: { type: String },
+  product_tags: [String],
   isDeleted: { type: Boolean, required: true, default: false },
   // weight: { type: Number, required: true }, 
   instagramPostIds: [{ type: String }], 
