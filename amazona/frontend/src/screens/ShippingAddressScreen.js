@@ -14,20 +14,51 @@ export default function ShippingAddressScreen() {
     userInfo,
     cart: { shippingAddress },
   } = state;
+
   const [fullName, setFullName] = useState(shippingAddress.fullName || '');
   const [address, setAddress] = useState(shippingAddress.address || '');
   const [city, setCity] = useState(shippingAddress.city || '');
-  const [postalCode, setPostalCode] = useState(
-    shippingAddress.postalCode || ''
-  );
-
+  const [postalCode, setPostalCode] = useState(shippingAddress.postalCode || '');
+  const [country, setCountry] = useState(shippingAddress.country || '');
 
   useEffect(() => {
     if (!userInfo) {
       navigate('/signin?redirect=/shipping');
     }
   }, [userInfo, navigate]);
-  const [country, setCountry] = useState(shippingAddress.country || '');
+
+  useEffect(() => {
+    if (shippingAddress.location) {
+      console.log('Location updated:', shippingAddress.location);
+
+      setAddress(shippingAddress.location.name || '');
+      setCity(shippingAddress.location.vicinity || '');
+
+      if (shippingAddress.location.address) {
+        const addressParts = shippingAddress.location.address.split(', ');
+
+        if (addressParts.length >= 3) {
+          const statePostalPart = addressParts[addressParts.length - 2];
+          const postalCodePart = statePostalPart.split(' ').pop();
+          setPostalCode(postalCodePart);
+
+          const countryPart = addressParts[addressParts.length - 1];
+          setCountry(countryPart.trim());
+        } else {
+          setPostalCode('');
+          setCountry('');
+        }
+      } else {
+        setPostalCode('');
+        setCountry('');
+      }
+    }
+  }, [shippingAddress.location]);
+
+  useEffect(() => {
+    ctxDispatch({ type: 'SET_FULLBOX_OFF' });
+  }, [ctxDispatch, fullBox]);
+
   const submitHandler = (e) => {
     e.preventDefault();
     ctxDispatch({
@@ -54,38 +85,6 @@ export default function ShippingAddressScreen() {
     );
     navigate('/placeorder');
   };
-useEffect(() => {
-  if (shippingAddress.location) {
-    console.log('Location updated:', shippingAddress.location);
-
-    setAddress(shippingAddress.location.name || '');
-    setCity(shippingAddress.location.vicinity || '');
-
-    const addressParts = shippingAddress.location.address.split(', ');
-
-    // Assuming the postal code is in the second last part of the address
-    // e.g., "Casuarina WA 6167"
-    if (addressParts.length >= 3) {
-      const statePostalPart = addressParts[addressParts.length - 2];
-      const postalCodePart = statePostalPart.split(' ').pop();
-      setPostalCode(postalCodePart);
-
-      const countryPart = addressParts[addressParts.length - 1];
-      setCountry(countryPart.trim());
-    } else {
-      setPostalCode('');
-      setCountry('');
-    }
-  }
-}, [shippingAddress.location]);
-
-
-
-
-
-  useEffect(() => {
-    ctxDispatch({ type: 'SET_FULLBOX_OFF' });
-  }, [ctxDispatch, fullBox]);
 
   return (
     <div className="custom-font-container">

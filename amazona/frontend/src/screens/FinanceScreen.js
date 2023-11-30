@@ -39,17 +39,18 @@ const FinanceScreen = () => {
     return <div style={{ width: '15px', height: '15px', borderRadius: '50%', backgroundColor: statusColor }}></div>;
   };
 
-const handleViewInvoice = (invoiceId) => {
-  const invoice = invoices.find(inv => inv._id === invoiceId);
-  if (invoice && invoice.pdfPath) {
-    window.open(invoice.pdfPath, '_blank', 'noopener,noreferrer');
-  } else {
-    alert('Invoice PDF not available.');
-  }
-};
-
-
-
+    const handleViewInvoice = (invoiceId) => {
+    const invoice = invoices.find(inv => inv._id === invoiceId);
+    if (invoice && invoice.pdfPath) {
+        const fullInvoicePath = process.env.NODE_ENV === 'production' 
+        ? `https://ventevault.com${invoice.pdfPath}`
+        : `http://localhost:5000${invoice.pdfPath}`;
+        
+        window.open(fullInvoicePath, '_blank', 'noopener,noreferrer');
+    } else {
+        alert('Invoice PDF not available.');
+    }
+    };
 
 
 
