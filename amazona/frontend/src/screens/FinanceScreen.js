@@ -43,7 +43,7 @@ const FinanceScreen = () => {
     const invoice = invoices.find(inv => inv._id === invoiceId);
     if (invoice && invoice.pdfPath) {
         const fullInvoicePath = process.env.NODE_ENV === 'production' 
-        ? `https://ventevault.com${invoice.pdfPath}`
+        ? `ventevault.com${invoice.pdfPath}`
         : `http://localhost:5000${invoice.pdfPath}`;
         
         window.open(fullInvoicePath, '_blank', 'noopener,noreferrer');
