@@ -1,67 +1,83 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { Store } from '../Store'; // Update the path according to your project structure
+import { Store } from '../Store';
 
 const FinanceScreen = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
+  
   const { state } = useContext(Store);
   const { userInfo } = state;
 
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        setLoading(true);
-        const { data } = await axios.get('/api/orders/invoices', {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
-        });
+  // Function to fetch all invoices
+  const fetchAllInvoices = async () => {
+    try {
+      setLoading(true);
+      const allInvoicesData = await axios.get('/api/orders/all-invoices', {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      setInvoices(Array.isArray(allInvoicesData.data) ? allInvoicesData.data : [allInvoicesData.data]);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching all invoices:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setInvoices(Array.isArray(data) ? data : [data]);
+  // Fetch all invoices for display
+  useEffect(() => {
+    if (userInfo) {
+      fetchAllInvoices();
+    }
+  }, [userInfo]);
+
+  // Separate useEffect for creating monthly invoices
+  useEffect(() => {
+    const createMonthlyInvoices = async () => {
+      try {
+        await axios.get('/api/orders/invoices', {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        });
+        // Optionally, refresh the invoices list after creation
+        fetchAllInvoices();
       } catch (err) {
-        setError(err.message);
-        console.error("Error fetching invoices:", err);
-      } finally {
-        setLoading(false);
+        console.error("Error creating monthly invoices:", err);
       }
     };
 
+    // This should run only when component mounts or userInfo changes
     if (userInfo) {
-      fetchInvoices();
+      createMonthlyInvoices();
     }
-  }, [userInfo]);
+  }, [userInfo]); // Removed 'fetchAllInvoices' from dependency array
 
   const renderPaidStatus = (isPaid) => {
     const statusColor = isPaid ? 'green' : 'red';
     return <div style={{ width: '15px', height: '15px', borderRadius: '50%', backgroundColor: statusColor }}></div>;
   };
 
-    const handleViewInvoice = (invoiceId) => {
+  const handleViewInvoice = (invoiceId) => {
     const invoice = invoices.find(inv => inv._id === invoiceId);
     if (invoice && invoice.pdfPath) {
-        const fullInvoicePath = process.env.NODE_ENV === 'production' 
-        ? `ventevault.com${invoice.pdfPath}`
+      const fullInvoicePath = process.env.NODE_ENV === 'production' 
+        ? `${invoice.pdfPath}`
         : `http://localhost:5000${invoice.pdfPath}`;
-        
-        window.open(fullInvoicePath, '_blank', 'noopener,noreferrer');
+      
+      window.open(fullInvoicePath, '_blank', 'noopener,noreferrer');
     } else {
-        alert('Invoice PDF not available.');
+      alert('Invoice PDF not available.');
     }
-    };
-
-
+  };
 
   if (!userInfo) return <div>Please login to view this page.</div>;
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-
-     <div className="table-container" >
-        <table className="table table-striped" style={{ marginTop: '6%' }}>
+    <div className="table-container">
+      <table className="table table-striped" style={{ marginTop: '6%' }}>
         <thead>
           <tr>
             <th>INVOICE ID</th>
@@ -95,5 +111,5 @@ const FinanceScreen = () => {
   );
 };
 
-
 export default FinanceScreen;
+

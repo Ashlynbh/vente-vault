@@ -738,6 +738,11 @@ function createInvoicePDF(invoice) {
 }
 
 
+orderRouter.get('/all-invoices', isAuth, isAdminOrBrand, expressAsyncHandler(async (req, res) => {
+  const invoices = await Invoice.find({});
+  res.send(invoices);
+}));
+
 
 
 
