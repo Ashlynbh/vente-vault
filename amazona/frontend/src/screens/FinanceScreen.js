@@ -75,6 +75,23 @@ const FinanceScreen = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+
+  const handleTogglePaidStatus = async (invoiceId) => {
+  try {
+    const response = await axios.put(`/api/orders/invoice/${invoiceId}/pay`, {}, {
+      headers: { Authorization: `Bearer ${userInfo.token}` },
+    });
+    if (response.data) {
+      alert('Invoice status updated successfully');
+      fetchAllInvoices(); // Refresh the invoices list
+    }
+  } catch (err) {
+    console.error("Error toggling invoice status:", err);
+    alert('Error updating invoice status');
+  }
+};
+
+
   return (
     <div className="table-container">
       <table className="table table-striped" style={{ marginTop: '6%' }}>
@@ -96,12 +113,22 @@ const FinanceScreen = () => {
               <td>{renderPaidStatus(invoice.isPaid)}</td>
               <td>
                 <button
-                  type="button"
-                  className="table-btn"
+                       type="button"
+            className="table-btn btn btn-light"
+            variant="light"
                   onClick={() => handleViewInvoice(invoice._id)}
                 >
                   View
                 </button>
+                {userInfo.isAdmin && (
+                  <button
+                         type="button"
+            className="table-btn btn btn-light"
+                    onClick={() => handleTogglePaidStatus(invoice._id)}
+                  >
+                    Paid
+                  </button>
+                )}
               </td>
             </tr>
           ))}

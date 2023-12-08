@@ -51,8 +51,12 @@ import { faShoppingCart, faUser, faTools,faAngleUp, faAngleDown} from '@fortawes
 import BrandGuideScreen from './screens/BrandGuideScreen';
 import FinanceScreen from './screens/FinanceScreen';
 
+
+
  
 function App() {
+
+ 
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { fullBox, cart, userInfo } = state;
 

@@ -14,6 +14,12 @@ import { getError } from '../utils';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
 import Button from 'react-bootstrap/Button';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import CheckoutForm from '../components/CheckoutForm';
+
+const stripePromise = loadStripe("pk_test_51OD2MKK7HyE7gRHbPvOinltMTNDPjaFmuo3nI4c6a5j6cXaFPnrHZes1dmhvOIEntHxFdtv9MSrvu7mbcpCqBiSe00S8lupeip");
+
 
 
 
@@ -55,6 +61,8 @@ function reducer(state, action) {
 
 
 export default function OrderScreen() {
+
+
   const { state } = useContext(Store);
   const { userInfo } = state;
 
@@ -84,8 +92,116 @@ export default function OrderScreen() {
     discountCodeApplied:'',
   });
 
+  const [clientSecret, setClientSecret] = useState("");
+
+ 
+
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+const handlePaymentMethodChange = (method) => {
+  setSelectedPaymentMethod(method);
+};
+
+
+const [elementsKey, setElementsKey] = useState(0); 
+
+useEffect(() => {
+  const fetchClientSecret = async () => {
+    try {
+      console.log("Preparing to fetch client secret");
+      const items = order.orderItems.map(item => ({
+        id: item._id,
+        price: item.price, 
+        quantity: item.quantity,
+        paymentMethodType: selectedPaymentMethod
+      }));
+
+
+      console.log('Items sent to backend:', items);
+
+      const response = await fetch("/api/orders/create-payment-intent", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userInfo.token}`
+        },
+        body: JSON.stringify({ 
+          items: order.orderItems.map(item => ({
+            id: item._id,
+            price: item.price * 100, // Assuming prices are in dollars and need to be converted to cents
+            quantity: item.quantity
+          })),
+          paymentMethodType: selectedPaymentMethod // This assumes 'selectedPaymentMethod' is defined and set elsewhere in your component
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClientSecret(data.clientSecret);
+        setElementsKey(prevKey => prevKey + 1);
+      } else {
+        console.error('Error response from server:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error fetching client secret:', error);
+    }
+  };
+
+  if (order && order.orderItems && order.orderItems.length > 0) {
+    fetchClientSecret();
+  }
+}, [order, userInfo.token]);
+
+
+
+
+  const appearance = {
+    theme: 'stripe',
+  };
+  const options = {
+    clientSecret,
+    appearance,
+  };
+
+
+
+const onSuccessfulPayment = async (paymentIntent) => {
+  try {
+    dispatch({ type: 'PAY_REQUEST' });
+
+    // Extract information from paymentIntent
+    const paymentData = {
+      paymentMethodId: paymentIntent.payment_method, // ID of the payment method used
+      paymentmethod: paymentIntent.payment_method_types[0], // Type of payment method used (e.g., 'card')
+      updatetime: new Date(paymentIntent.created * 1000).toISOString(), // Convert Stripe timestamp to ISO format
+      // Include any other details you need
+    };
+
+    // Make the API call to your backend with the payment data
+    const paymentResult = await axios.put(
+      `/api/orders/${order._id}/stripe-pay`,
+      paymentData,
+      { headers: { authorization: `Bearer ${userInfo.token}` } }
+    );
+
+    dispatch({ type: 'PAY_SUCCESS', payload: paymentResult.data });
+    toast.success('Order is paid');
+    // Additional logic as needed
+  } catch (err) {
+    dispatch({ type: 'PAY_FAIL', payload: getError(err) });
+    toast.error(getError(err));
+  }
+};
+
+
+
+
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const [googleApiKey, setGoogleApiKey] = useState('');
+
+
+
+
+
 
 
   function createOrder(data, actions) {
@@ -221,8 +337,12 @@ function onError(err) {
   }, [userInfo]);
 
 
+// Helper function to format the ISO date string
+const formatDateAndTime = (isoString) => {
+  const date = new Date(isoString);
+  return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+};
 
-    
  
   return loading ? (
   <LoadingBox></LoadingBox>
@@ -254,13 +374,24 @@ function onError(err) {
                     )}
                   </Card.Text>
 
-                  {order.isDelivered ? (
-                    <MessageBox variant="success">
-                      Shipped at {order.deliveredAt}
-                    </MessageBox>
-                  ) : (
-                    <MessageBox variant="danger">Not Shipped</MessageBox>
-                  )}
+                  {order.brandDeliveries && order.brandDeliveries.length > 0 && (
+  <div>
+    <h4>Shipping Status:</h4>
+    {order.brandDeliveries.map((brandDelivery, index) => (
+      <div key={index}>
+        <strong>Brand: {brandDelivery.brandName}</strong>
+        {brandDelivery.isDelivered ? (
+          <MessageBox variant="success">
+            Shipped on {new Date(brandDelivery.deliveredAt).toLocaleDateString()}
+          </MessageBox>
+        ) : (
+          <MessageBox variant="warning">Not Shipped</MessageBox>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
                 </Card.Body>
               </Card>
               <Card className="mb-3">
@@ -271,7 +402,7 @@ function onError(err) {
                   </Card.Text>
                   {order.isPaid ? (
                     <MessageBox variant="success">
-                      Paid at {order.paidAt}
+                       Paid at {formatDateAndTime(order.paidAt)}
                     </MessageBox>
                   ) : (
                     <MessageBox variant="danger">Not Paid</MessageBox>
@@ -344,12 +475,7 @@ function onError(err) {
                         <Col>${order.shippingPrice.toFixed(2)}</Col>
                       </Row>
                     </ListGroup.Item>
-                    {/* <ListGroup.Item>
-                      <Row>
-                        <Col>Tax</Col>
-                        <Col>${order.taxPrice.toFixed(2)}</Col>
-                      </Row>
-                    </ListGroup.Item> */}
+   
                     {order.discountAmount > 0 && (
                       <ListGroup.Item>
                         <Row>
@@ -369,6 +495,8 @@ function onError(err) {
                       </Row>
                     </ListGroup.Item>
                     {!order.isPaid && (
+                    <>
+                      {/* PayPal Payment Button */}
                       <ListGroup.Item>
                         {isPending ? (
                           <LoadingBox />
@@ -381,11 +509,22 @@ function onError(err) {
                             ></PayPalButtons>
                           </div>
                         )}
-                        {loadingPay && <LoadingBox></LoadingBox>}
+                        {loadingPay && <LoadingBox />}
                       </ListGroup.Item>
-                    )}
-                    
-                  </ListGroup>
+
+                      {/* Stripe and Afterpay Payment Forms */}
+                     {clientSecret && (
+                    <ListGroup.Item>
+                      {/* Using the key to remount the component */}
+                      <Elements key={elementsKey} options={options} stripe={stripePromise}>
+                        <CheckoutForm onSuccessfulPayment={onSuccessfulPayment}/>
+                      </Elements>
+                        </ListGroup.Item>
+                      )}
+                    </>
+                  )}
+              </ListGroup>
+
                 </Card.Body>
               </Card>
             </Col>

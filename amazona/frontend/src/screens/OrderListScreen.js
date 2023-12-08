@@ -49,45 +49,27 @@ export default function OrderListScreen() {
       error: '',
     });
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      dispatch({ type: 'FETCH_REQUEST' });
-
-      // Fetch orders
-      const { data: ordersData } = await axios.get(`/api/orders`, {
-        headers: { Authorization: `Bearer ${userInfo.token}` },
-      });
-      console.log('Fetched Orders:', ordersData); // Log the orders data
-
-      // Fetch dispatch times
-      const { data: dispatchTimes } = await axios.get(`/api/orders/dispatch-times`, {
-        headers: { Authorization: `Bearer ${userInfo.token}` },
-      });
-      console.log('Fetched Dispatch Times:', dispatchTimes); // Log the dispatch times data
-
-      // Merging orders with dispatch times
-      const ordersWithDispatchTimes = ordersData.map(order => ({
-        ...order,
-        dispatchTime: dispatchTimes[order._id]
-      }));
-
-      console.log('Orders with dispatch times:', ordersWithDispatchTimes); // Log the merged data
-
-      dispatch({ type: 'FETCH_SUCCESS', payload: ordersWithDispatchTimes });
-    } catch (err) {
-      console.error('Error fetching data:', err); // Log any errors
-      dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        dispatch({ type: 'FETCH_REQUEST' });
+        const { data } = await axios.get(`/api/orders`, {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        });
+        dispatch({ type: 'FETCH_SUCCESS', payload: data });
+      } catch (err) {
+        dispatch({
+          type: 'FETCH_FAIL',
+          payload: getError(err),
+        });
+      }
+    };
+    if (successDelete) {
+      dispatch({ type: 'DELETE_RESET' });
+    } else {
+      fetchData();
     }
-  };
-
-  if (successDelete) {
-    dispatch({ type: 'DELETE_RESET' });
-  } else {
-    fetchData();
-  }
-}, [userInfo, successDelete]);
-
+  }, [userInfo, successDelete]);
 
   // Convert to CSV
     const convertToCSV = (orders) => {
@@ -145,6 +127,27 @@ useEffect(() => {
   }
 };
 
+const isDeliveryDelayed = (brandDeliveries) => {
+  return brandDeliveries.some(brandDelivery => {
+    const dispatchTimeInHours = brandDelivery.dispatchTime / 60;
+    return dispatchTimeInHours > 24;
+  });
+};
+
+const getDeliveryStatusForAdmin = (order) => {
+  const totalBrands = order.brandDeliveries.length;
+  const shippedBrands = order.brandDeliveries.filter(bd => bd.isDelivered).length;
+
+  if (shippedBrands === 0) {
+    return 'No'; // None of the brands have shipped
+  } else if (shippedBrands < totalBrands) {
+    return 'Pending'; // Some, but not all, of the brands have shipped
+  } else {
+    return 'Yes'; // All brands have shipped
+  }
+};
+
+
 
   return (
     <div>
@@ -167,49 +170,57 @@ useEffect(() => {
               <th>DATE</th>
               <th>TOTAL</th>
               <th>PAID</th>
-              <th>DELIVERED</th>
+              <th>SHIPPED</th>
               <th>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order._id}>
-                <td>{order._id}</td>
-                <td>{order.user ? order.user.name : 'DELETED USER'}</td>
-                <td>{order.createdAt.substring(0, 10)}</td>
-                <td>{order.totalPrice.toFixed(2)}</td>
-                <td>{order.isPaid ? order.paidAt.substring(0, 10) : 'No'}</td>
-                <td>
-                {getDeliveryStatusForUser(order)}
-                  {/* Check if dispatchTime exceeds 24 hours (1440 minutes) and display a warning icon with minutes */}
-                  {order.dispatchTime > 1440 && (
-                    <span className="warning-icon">⚠️ ({order.dispatchTime} mins)</span>
-                  )}
-                </td>
-                <td>
-                  <Button
-                    type="button"
-                    className="table-btn"
-                    variant="light"
-                    onClick={() => navigate(`/order/admin/${order._id}`)}
-                  >
-                    Details
-                  </Button>
-                  &nbsp;
-                    {userInfo.isAdmin && (
-                      <Button
-                        type="button"
-                        className="table-btn"
-                        variant="light"
-                        onClick={() => deleteHandler(order)}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {orders.map((order) => {
+    const isDelayed = isDeliveryDelayed(order.brandDeliveries);
+    const canViewWarning = userInfo.isAdmin || userInfo.isBrand
+
+    return (
+      <tr key={order._id}>
+        <td>{order._id}</td>
+        <td>{order.user ? order.user.name : 'DELETED USER'}</td>
+        <td>{order.createdAt.substring(0, 10)}</td>
+        <td>{order.totalPrice.toFixed(2)}</td>
+        
+        <td>{order.isPaid ? order.paidAt.substring(0, 10) : 'No'}</td>
+        <td>
+            {userInfo.isAdmin ? getDeliveryStatusForAdmin(order) : getDeliveryStatusForUser(order)}
+       
+          {isDelayed && canViewWarning && (
+            <span style={{ color: 'red', marginLeft: '10px' }}>
+              ⚠️ {/* or any other warning icon you prefer */}
+            </span>
+          )}
+        </td>
+        <td>
+          <Button
+            type="button"
+            className="table-btn"
+            variant="light"
+            onClick={() => navigate(`/order/admin/${order._id}`)}
+          >
+            Details
+          </Button>
+          &nbsp;
+          {userInfo.isAdmin && (
+            <Button
+              type="button"
+              className="table-btn"
+              variant="light"
+              onClick={() => deleteHandler(order)}
+            >
+              Delete
+            </Button>
+          )}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
         </table>
         <Button className="csv-button" variant="primary" onClick={downloadCSV}>Export as CSV</Button>
       </div>

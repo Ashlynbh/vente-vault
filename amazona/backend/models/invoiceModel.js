@@ -8,7 +8,7 @@ const invoiceSchema = new mongoose.Schema({
 brandId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User' // Referring to the User model
+    ref: 'User'
   },
   brandName: {
     type: String,
@@ -34,14 +34,6 @@ brandId: {
     type: Number,
     required: true
   },
-  items: [
-    {
-      description: String,
-      quantity: Number,
-      unitPrice: Number,
-      totalPrice: Number
-    }
-  ],
   isPaid: {
     type: Boolean,
     default: false
@@ -56,6 +48,11 @@ brandId: {
     type: Number,
     default: 0
   },
+  fines:{
+    type: Number,
+    default: 0
+
+  },
   gst: {
     type: Number,
     default: 0
@@ -64,25 +61,18 @@ brandId: {
     type: String,
     default: ''
   },
-  returnedOrders: [
-    {
-      order: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order'
-      },
-      reason: String, 
-      amount: Number 
-    }
-  ],
-  debitOfOtherRevenue: {
+  returnedOrders: {
+   type: Number,
+     default: 0},
+
+  refundfees: {
     type: Number,
     default: 0
   },
-  refundOnFeesGST: {
+    refundgst: {
     type: Number,
     default: 0
   },
-  additionalNotes: String
 });
 
 // Pre-save hook to generate invoice number

@@ -10,6 +10,9 @@ import 'moment-business-days';
 import 'moment-timezone';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +24,46 @@ import { isAuth, isAdmin, sendEmail, payOrderEmailTemplate, isAdminOrBrand, send
 
 
 const orderRouter = express.Router();
+
+
+//////STRIPE PAY////
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET);
+
+
+
+
+// Function to calculate total order amount
+const calculateOrderAmount = (items) => {
+  // Sum up the total based on item price and quantity
+  return items.reduce((total, item) => {
+    return total + (item.price * item.quantity);
+  }, 0);
+};
+
+orderRouter.post("/create-payment-intent", async (req, res) => {
+  try {
+    console.log("Received request for payment intent:", req.body);
+    const { items } = req.body;
+
+    const amount = calculateOrderAmount(items);
+    console.log("Calculated amount (in cents):", amount);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "aud",
+      automatic_payment_methods: { enabled: true },
+    });
+
+    console.log("Payment Intent created:", paymentIntent);
+    res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
 
 orderRouter.get(
   '/',
@@ -105,207 +148,160 @@ orderRouter.get('/summary', isAuth, isAdminOrBrand, expressAsyncHandler(async (r
   let orderMatchStage = {};
   let productMatchStage = {};
   const brandUserIdStr = req.user.isBrand && !req.user.isAdmin ? req.user._id.toString() : null;
+  const isPaidMatch = { isPaid: true }; 
 
 
-  if (req.user.isBrand && !req.user.isAdmin) {
+if (req.user.isBrand && !req.user.isAdmin) {
+  orderMatchStage = {
+    $expr: {
+      $and: [ // Use $and to combine conditions
+        { $eq: [{ $toString: "$orderItems.createdBy" }, brandUserIdStr] },
+        isPaidMatch // This isPaidMatch object contains { isPaid: true }
+      ]
+    }
+  };
 
+  productMatchStage = {
+    $expr: {
+      $and: [ // Use $and to combine conditions
+        { $eq: [{ $toString: "$createdBy" }, brandUserIdStr] },
+        isPaidMatch // This isPaidMatch object contains { isPaid: true }
+      ]
+    }
+  };
+}
 
-    orderMatchStage = {
-      $expr: {
-        $eq: [{ $toString: "$orderItems.createdBy" }, brandUserIdStr]
-      }
-    };
-
-    productMatchStage = {
-      $expr: {
-        $eq: [{ $toString: "$createdBy" }, brandUserIdStr]
-      }
-    };
-  }
 
   const ordersSummary = await Order.aggregate([
-    { $unwind: "$orderItems" },
-    { $match: orderMatchStage },
-    {
-      $group: {
-        _id: null,
-        numOrders: { $sum: 1 },
-        totalSales: { $sum: "$orderItems.price" },
-      },
+  { $unwind: "$orderItems" },
+  { $match: { $and: [orderMatchStage, isPaidMatch] } }, // Add isPaidMatch condition
+  {
+    $group: {
+      _id: null,
+      numOrders: { $sum: 1 },
+      totalSales: { $sum: "$orderItems.price" },
     },
-  ]);
-  
+  },
+]);
 
-  const usersSummary = await Order.aggregate([
-    { $unwind: "$orderItems" },
-    { $match: orderMatchStage },
-    {
-      $group: {
-        _id: "$user", // Group by user ID
-        numOrders: { $sum: 1 }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        uniqueUsers: { $sum: 1 } // Count unique users
-      }
+const usersSummary = await Order.aggregate([
+  { $unwind: "$orderItems" },
+  { $match: { $and: [orderMatchStage, isPaidMatch] } }, // Add isPaidMatch condition
+  {
+    $group: {
+      _id: "$user", // Group by user ID
+      numOrders: { $sum: 1 }
     }
-  ]);
+  },
+  {
+    $group: {
+      _id: null,
+      uniqueUsers: { $sum: 1 } // Count unique users
+    }
+  }
+]);
 
-  console.log(usersSummary)
+console.log(usersSummary);
 
 
-  const dailyOrdersSummary = await Order.aggregate([
-    { $unwind: "$orderItems" },
-    { $match: orderMatchStage },
-    {
-      $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: "$createdAt" } },
-        orders: { $sum: 1 },
-        sales: { $sum: "$orderItems.price" },
-      },
+
+const dailyOrdersSummary = await Order.aggregate([
+  { $unwind: "$orderItems" },
+  { $match: { $and: [orderMatchStage, isPaidMatch] } }, // Add isPaidMatch condition
+  {
+    $group: {
+      _id: { $dateToString: { format: '%Y-%m-%d', date: "$createdAt" } },
+      orders: { $sum: 1 },
+      sales: { $sum: "$orderItems.price" },
     },
-    { $sort: { _id: 1 } },
-  ]);
+  },
+  { $sort: { _id: 1 } },
+]);
 
- const categoryMatchStage = req.user.isAdmin ? {} : { 'productDetails.createdBy': new mongoose.Types.ObjectId(brandUserIdStr) };
+const categoryMatchStage = req.user.isAdmin ? {} : { 'productDetails.createdBy': new mongoose.Types.ObjectId(brandUserIdStr) };
 
-  const productCategoriesSummary = await Order.aggregate([
-    { $unwind: '$orderItems' },
-    {
-      $lookup: {
-        from: 'products',
-        localField: 'orderItems.product',
-        foreignField: '_id',
-        as: 'productDetails'
-      },
+const productCategoriesSummary = await Order.aggregate([
+  { $unwind: '$orderItems' },
+  {
+    $lookup: {
+      from: 'products',
+      localField: 'orderItems.product',
+      foreignField: '_id',
+      as: 'productDetails'
     },
-    { $unwind: '$productDetails' },
-    // Apply the match stage conditionally
-    ...(Object.keys(categoryMatchStage).length ? [{ $match: categoryMatchStage }] : []),
-    {
-      $group: {
-        _id: '$productDetails.category',
-        count: { $sum: 1 },
-        totalSales: { $sum: '$orderItems.price' }
-      },
+  },
+  { $unwind: '$productDetails' },
+  // Apply the match stage conditionally
+  ...(Object.keys(categoryMatchStage).length ? [{ $match: { $and: [categoryMatchStage, isPaidMatch] } }] : []), // Add isPaidMatch condition
+  {
+    $group: {
+      _id: '$productDetails.category',
+      count: { $sum: 1 },
+      totalSales: { $sum: '$orderItems.price' }
     },
-    { $sort: { _id: 1 } },
-  ]);
+  },
+  { $sort: { _id: 1 } },
+]);
 
 
-  const dispatchTimeAggregation = [
+
+
+    // Aggregation to calculate average dispatch times per brand
+    const dispatchTimeAggregation = await Order.aggregate([
         { $unwind: "$brandDeliveries" },
         { $match: { "brandDeliveries.isDelivered": true } },
         {
-            $project: {
-                brand: "$brandDeliveries.brand",
-                paidAt: "$paidAt",
-                deliveredAt: "$brandDeliveries.deliveredAt"
+            $group: {
+                _id: "$brandDeliveries.brand",
+                averageDispatchTime: { $avg: "$brandDeliveries.dispatchTime" }
             }
-        },
-    ];
-
-    // Execute the aggregation pipeline
-    const brandDispatchData = req.user.isAdmin || req.user.isBrand ? 
-        await Order.aggregate(dispatchTimeAggregation) : [];
-
-const calculateDispatchHours = (start, end) => {
-    let startMoment = moment(start);
-    let endMoment = moment(end);
-    let totalMinutes = 0;
-
-    console.log(`Calculating dispatch time from ${start} to ${end}`);
-
-    // Check if the order starts and ends on the same day
-    if (startMoment.isSame(endMoment, 'day')) {
-        totalMinutes = endMoment.diff(startMoment, 'minutes');
-        console.log(`Same day dispatch: ${totalMinutes} minutes`);
-    } else {
-        // Handle multi-day dispatch
-        while (startMoment.isBefore(endMoment, 'day')) {
-            if (startMoment.isoWeekday() <= 5) { // Check if it's a weekday
-                // If start day, calculate minutes from start time to end of day
-                if (startMoment.isSame(moment(start), 'day')) {
-                    let dayMinutes = startMoment.clone().endOf('day').diff(startMoment, 'minutes');
-                    console.log(`Start day minutes (${startMoment.format()}): ${dayMinutes}`);
-                    totalMinutes += dayMinutes;
-                }
-                // If end day, calculate minutes from start of day to end time
-                else if (startMoment.isSame(endMoment, 'day')) {
-                    let dayMinutes = endMoment.diff(startMoment.clone().startOf('day'), 'minutes');
-                    console.log(`End day minutes (${startMoment.format()}): ${dayMinutes}`);
-                    totalMinutes += dayMinutes;
-                }
-                // For full weekdays in between, add 24 hours in minutes
-                else {
-                    console.log(`Full day (${startMoment.format()}): 1440 minutes`);
-                    totalMinutes += 24 * 60;
-                }
-            } else {
-                console.log(`Skipping weekend (${startMoment.format()})`);
-            }
-            startMoment.add(1, 'day').startOf('day');
         }
-    }
+    ]);
 
-    console.log(`Total dispatch time: ${totalMinutes} minutes`);
-    return totalMinutes;
-};
-
-
-
-    // Map over brandDispatchData to calculate dispatch times
-    const brandDispatchSummary = brandDispatchData.map(data => {
-        const dispatchTimeHours = calculateDispatchHours(data.paidAt, data.deliveredAt);
-        return {
-            brand: data.brand,
-            dispatchTimeHours
-        };
-    });
-
-    // Calculate the average dispatch time per brand
-    const averageDispatchTimePerBrand = brandDispatchSummary.reduce((acc, val) => {
-        if (!acc[val.brand]) {
-            acc[val.brand] = { totalminutes: 0, count: 0 };
-        }
-        acc[val.brand].totalminutes += val.dispatchTimeHours;
-        acc[val.brand].count += 1;
+    // Convert the aggregation result into a more readable format
+    const brandDispatchSummary = dispatchTimeAggregation.reduce((acc, val) => {
+        acc[val._id] = val.averageDispatchTime; // Store average dispatch time
         return acc;
     }, {});
 
-    // Calculate the average for each brand
-    Object.keys(averageDispatchTimePerBrand).forEach(brand => {
-        averageDispatchTimePerBrand[brand].average = 
-            averageDispatchTimePerBrand[brand].totalminutes / averageDispatchTimePerBrand[brand].count;
-    });
+    console.log(brandDispatchSummary);
 
-    console.log(averageDispatchTimePerBrand)
 
-  const commonAggregationStages = [
-    { $unwind: '$orderItems' },
-    { $match: orderMatchStage },
-    { $group: {
+const commonAggregationStages = [
+  { $unwind: '$orderItems' },
+  { $match: { $and: [orderMatchStage, isPaidMatch] } }, // Add isPaidMatch condition
+  { 
+    $group: {
       _id: '$orderItems.product',
       totalSales: { $sum: { $multiply: ['$orderItems.quantity', '$orderItems.price'] }},
       name: { $first: '$orderItems.name' }
-    }}
-  ];
+    }
+  }
+];
 
-  // Aggregate top selling products
-  const topProducts = await Order.aggregate([
-    ...commonAggregationStages,
-    { $sort: { totalSales: -1 }},
-    { $limit: 3 }
-  ]);
+  // For top selling products
+const topProducts = await Order.aggregate([
+  ...commonAggregationStages,
+  { $sort: { totalSales: -1 }},
+  { $limit: 3 }
+]);
 
-  // Aggregate bottom selling products
-  const bottomProducts = await Order.aggregate([
-    ...commonAggregationStages,
-    { $sort: { totalSales: 1 }},
-    { $limit: 3 }
-  ]);
+// For bottom selling products
+const bottomProducts = await Order.aggregate([
+  ...commonAggregationStages,
+  { $sort: { totalSales: 1 }},
+  { $limit: 3 }
+]);
+
+// Manually sort and log the top products
+const sortedTopProducts = topProducts.sort((a, b) => b.totalSales - a.totalSales);
+console.log('Top Products:', sortedTopProducts);
+
+// Manually sort and log the bottom products
+const sortedBottomProducts = bottomProducts.sort((a, b) => a.totalSales - b.totalSales);
+console.log('Bottom Products:', sortedBottomProducts);
+
+
 
     let paidNotDeliveredOrdersCount;
 
@@ -369,10 +365,11 @@ const calculateDispatchHours = (start, end) => {
     productCategories: productCategoriesSummary,
     topProducts,
     bottomProducts,
-    brandDispatchSummary: averageDispatchTimePerBrand,
+    brandDispatchSummary,
     paidNotDeliveredOrdersCount
   });
 }));
+
 
 
 const calculateDispatchHours = (start, end) => {
@@ -417,31 +414,7 @@ const calculateDispatchHours = (start, end) => {
     console.log(`Total dispatch time: ${totalMinutes} minutes`);
     return totalMinutes;
 };
-orderRouter.get('/dispatch-times', async (req, res) => {
-    try {
-        // Fetch orders that have been delivered
-        const orders = await Order.find({"brandDeliveries.isDelivered": true});
 
-        // Calculate dispatch times for each order
-        const dispatchTimes = {};
-        orders.forEach(order => {
-            order.brandDeliveries.forEach(brandDelivery => {
-                if (brandDelivery.isDelivered) {
-                    const totalMinutes = calculateDispatchHours(order.paidAt, brandDelivery.deliveredAt);
-                    dispatchTimes[order._id] = (dispatchTimes[order._id] || 0) + totalMinutes;
-                }
-            });
-        });
-
-        console.log('Dispatch Times:', dispatchTimes); // Log the dispatch times object
-
-        // Send response
-        res.json(dispatchTimes);
-    } catch (error) {
-        console.error('Error in /dispatch-times:', error); // Log any errors
-        res.status(500).json({ message: error.message });
-    }
-});
 
 
 
@@ -588,50 +561,86 @@ orderRouter.get(
   })
 );
 
-
 orderRouter.get('/invoices', isAuth, isAdminOrBrand, expressAsyncHandler(async (req, res) => {
-  let monthYear = req.query.monthYear;
 
+  // let monthYear = req.query.monthYear;
+
+  // if (!monthYear) {
+  //   const currentDate = new Date();
+  //   const year = currentDate.getFullYear();
+  //   const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  //   monthYear = `${year}-${month}`;
+  // }
+
+    let monthYear = req.query.monthYear;
+
+  // Manually set the month and year to November 2023 for testing
+  const testYear = 2023;
+  const testMonth = '12';  // November
+
+  // Use testYear and testMonth if monthYear is not provided
   if (!monthYear) {
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    monthYear = `${year}-${month}`;
+    monthYear = `${testYear}-${testMonth}`;
   }
-
   const year = parseInt(monthYear.split('-')[0], 10);
   const month = parseInt(monthYear.split('-')[1], 10);
 
   const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0);  // Last day of the month
+  const endDate = new Date(year, month, 0); // Last day of the month
+
+    // Create a filter for matching invoices
+  let matchFilter = {
+    'brandDeliveries.isDelivered': true,
+    'brandDeliveries.deliveredAt': { $gte: startDate, $lt: endDate },
+  };
+
+  // If the user is a brand, modify the filter to include only their invoices
+  if (!req.user.isAdmin) {
+    matchFilter['brandDeliveries.brand'] = req.user._id;
+  }
+
 
   const invoicesData = await Order.aggregate([
-    { $unwind: "$brandDeliveries" },
-    { 
-      $match: { 
-        'brandDeliveries.isDelivered': true, 
-        'brandDeliveries.deliveredAt': { $gte: startDate, $lt: endDate } 
-      }
+    { $unwind: '$brandDeliveries' },
+     { $match: matchFilter },
+    {
+      $match: {
+        'brandDeliveries.isDelivered': true,
+        'brandDeliveries.deliveredAt': { $gte: startDate, $lt: endDate },
+      },
     },
-    { 
+    {
       $group: {
         _id: '$brandDeliveries.brand',
         totalSales: { $sum: '$totalPrice' },
         commission: { $sum: { $multiply: ['$totalPrice', 0.30] } },
-        orderIds: { $push: '$_id' }
-      }
-    }
+        orderIds: { $push: '$_id' },
+        dispatchTimes: { $push: '$brandDeliveries.dispatchTime' }, // Push dispatchTimes into the group
+      },
+    },
   ]);
 
-  const invoicePromises = invoicesData.map(async invoiceData => {
-    const brandUser = await User.findById(invoiceData._id);
-    if (!brandUser || !brandUser.isBrand) return;
+  const invoicePromises = invoicesData.map(async (invoiceData) => {
+  const brandUser = await User.findById(invoiceData._id);
+  if (!brandUser || !brandUser.isBrand) return;
 
-    const invoiceIdentifier = `${invoiceData._id}-${year}-${month}`;
-    let existingInvoice = await Invoice.findOne({ invoiceIdentifier: invoiceIdentifier });
+  const brandIdString = invoiceData._id.toString(); // Use the correct brand ID
+  const invoiceIdentifier = `${brandIdString}-${year}-${month}`;
+  let existingInvoice = await Invoice.findOne({ invoiceIdentifier: invoiceIdentifier });
+
+  console.log(`Brand ID: ${brandIdString}`);
+
+ let totalFine = 0;
+invoiceData.dispatchTimes.forEach(dispatchTime => {
+  if (dispatchTime > 1440) { // Check if dispatch time exceeds 1440 minutes
+    totalFine += 15; // Add $15 fine for each instance
+  }
+});
+
+console.log(`Brand ID ${brandIdString} - Total Fine: $${totalFine}`);
 
     if (!existingInvoice) {
-      const invoiceDate = endDate;  // Last day of the month
+      const invoiceDate = endDate; // Last day of the month
       const dueDate = new Date(invoiceDate);
       dueDate.setDate(dueDate.getDate() + 15); // Assuming a 15-day payment term
 
@@ -644,18 +653,20 @@ orderRouter.get('/invoices', isAuth, isAdminOrBrand, expressAsyncHandler(async (
         totalAmount: invoiceData.totalSales,
         fees: invoiceData.commission,
         gst: 0,
-        returnedOrders: [],
         orders: invoiceData.orderIds,
+        fines: totalFine, // Add fine amount to the invoice
         // Add any other necessary fields
       });
 
+      // Save the new invoice and return it
       return newInvoice.save();
     } else {
-      return existingInvoice;
+      // Update the existing invoice with the fine amount
+      existingInvoice.totalFine = totalFine;
+      return existingInvoice.save();
     }
   });
 
-  
   try {
     const savedInvoices = await Promise.all(invoicePromises);
 
@@ -684,34 +695,62 @@ function createInvoicePDF(invoice) {
     }
   };
 
+
+
    const printer = new PdfPrinter(fonts);
 
-  // Ensure the invoices directory exists
-  const invoicesDir = path.join(__dirname, 'invoices');
-  if (!fs.existsSync(invoicesDir)) {
-    fs.mkdirSync(invoicesDir, { recursive: true });
-  }
+// Ensure the invoices directory exists in the parent directory of __dirname
+const invoicesDir = path.join(__dirname, '..', 'invoices');
+if (!fs.existsSync(invoicesDir)) {
+  fs.mkdirSync(invoicesDir, { recursive: true });
+}
+const ordersSubtotal = (invoice.totalAmount ?? 0) - (invoice.fees ?? 0) - (invoice.gst ?? 0) - (invoice.totalFine ?? 0);
+const refundsSubtotal = (invoice.returnedOrders ?? 0) - (invoice.refundfees ?? 0) - (invoice.refundgst ?? 0);
+const totalBalance = ordersSubtotal - refundsSubtotal;
 
   const docDefinition = {
     content: [
-      { text: 'Invoice', style: 'header' },
-      { text: `Brand Name: ${invoice.brandName}`, margin: [0, 5, 0, 15] },
+      { text: `Period: ${invoice.invoiceDate ? invoice.invoiceDate.toISOString().substring(0, 10) : 'N/A'}` },
       {
+        style: 'tableStyle',
         table: {
-          widths: ['*', 'auto', 100, '*'],
+          widths: ['*', '*', '*'],
           body: [
-            ['Invoice ID', 'Invoice Date', 'Total Sales', 'Commission'],
-[
-        invoice.invoiceIdentifier || 'N/A', 
-        invoice.invoiceDate ? invoice.invoiceDate.toISOString().substring(0, 10) : 'N/A', 
-        invoice.totalAmount ? invoice.totalAmount.toFixed(2).toString() : '0.00', 
-        invoice.fees ? invoice.fees.toFixed(2).toString() : '0.00'
-      ]
-            // Add more rows as necessary
+            [{ text: 'Orders', bold: true, colSpan: 3, border: [false, false, false, false] }, {}, {}],
+            ['Sales Revenue', '', invoice.totalAmount?.toFixed(2) ?? '0.00'],
+            ['Commission', '', (invoice.fees ?? 0).toFixed(2)],
+            ['Fees', '', (invoice.fines ?? 0).toFixed(2)],
+            ['GST', '', (invoice.gst ?? 0).toFixed(2)],
+            [{ text: 'Subtotal', colSpan: 2, border: [false, false, false, false] }, {}, ordersSubtotal.toFixed(2)],
+            [{ text: '', colSpan: 3, border: [false, true, false, false] }, {}, {}], // Separator line
+            [{ text: 'Refunds', bold: true, colSpan: 3, border: [false, false, false, false] }, {}, {}],
+            ['Refund or Cancelled Orders', '', (invoice.returnedOrders ?? 0).toFixed(2)],
+            ['Refund on Fees', '', (invoice.refundOnFeesGST ?? 0).toFixed(2)],
+            [{ text: 'Subtotal', colSpan: 2, border: [false, false, false, false] }, {}, refundsSubtotal.toFixed(2)],
+            [{ text: '', colSpan: 3, border: [false, true, false, false] }, {}, {}], // Separator line
+            [{ text: 'Closing Balance', bold: true }, 'Total Balance', totalBalance.toFixed(2)],
+            [{ text: 'PAYOUT', bold: true, colSpan: 2, border: [false, false, false, false] }, {}, totalBalance.toFixed(2)]
           ]
-        }
+        },
+       layout: {
+      // Custom layout for increased row spacing
+      defaultBorder: false,
+      hLineWidth: function(i, node) {
+        return 1;
       },
-      // ... Additional content as needed
+      vLineWidth: function(i, node) {
+        return 0;
+      },
+      hLineColor: function(i, node) {
+        return 'black'; // Color of horizontal lines
+      },
+      vLineColor: function(i, node) {
+        return 'white';
+      },
+      paddingTop: function(i, node) { return 10; }, // Increase top padding
+      paddingBottom: function(i, node) { return 10; } // Increase bottom padding
+    }
+      }
     ],
     styles: {
       header: {
@@ -719,11 +758,15 @@ function createInvoicePDF(invoice) {
         bold: true,
         alignment: 'center',
         margin: [0, 0, 0, 20]
+      },
+      tableStyle: {
+        margin: [0, 5, 0, 15]
       }
-      // ... Additional styles as needed
     }
   };
+
   // Save the PDF file in the invoices directory
+  
   const pdfPath = path.join(invoicesDir, `Invoice-${invoice.invoiceIdentifier}.pdf`);
   const pdfDoc = printer.createPdfKitDocument(docDefinition);
   pdfDoc.pipe(fs.createWriteStream(pdfPath));
@@ -739,9 +782,17 @@ function createInvoicePDF(invoice) {
 
 
 orderRouter.get('/all-invoices', isAuth, isAdminOrBrand, expressAsyncHandler(async (req, res) => {
-  const invoices = await Invoice.find({});
+  let query = {};
+
+  // If the user is not an admin, restrict the query to their brand ID
+  if (!req.user.isAdmin) {
+    query.brandId = req.user._id;
+  }
+
+  const invoices = await Invoice.find(query);
   res.send(invoices);
 }));
+
 
 
 
@@ -762,22 +813,6 @@ orderRouter.put('/invoice/:id/pay', isAuth, isAdmin, expressAsyncHandler(async (
   }
 }));
 
-orderRouter.put('/invoice/:id/pay', isAuth, isAdmin, expressAsyncHandler(async (req, res) => {
-  const invoiceId = req.params.id;
-  const invoice = await Invoice.findById(invoiceId); // Assuming you have an Invoice model
-
-  if (invoice) {
-    invoice.isPaid = !invoice.isPaid; // Toggle the payment status
-    // Optionally, record the payment date
-    if (invoice.isPaid) {
-      invoice.paidAt = new Date();
-    }
-    const updatedInvoice = await invoice.save();
-    res.send({ message: 'Invoice updated', invoice: updatedInvoice });
-  } else {
-    res.status(404).send({ message: 'Invoice not found' });
-  }
-}));
 
 
 
@@ -811,32 +846,20 @@ orderRouter.put(
       );
 
       if (brandDeliveryIndex !== -1) {
-        order.brandDeliveries[brandDeliveryIndex].isDelivered = true;
-        order.brandDeliveries[brandDeliveryIndex].deliveredAt = Date.now();
-        order.brandDeliveries[brandDeliveryIndex].trackingNumber = trackingNumber;
+        const brandDelivery = order.brandDeliveries[brandDeliveryIndex];
+        brandDelivery.isDelivered = true;
+        brandDelivery.deliveredAt = new Date();
+        brandDelivery.trackingNumber = trackingNumber;
+
+        // Calculate the dispatch time
+        const dispatchTime = calculateDispatchHours(order.paidAt, brandDelivery.deliveredAt);
+        brandDelivery.dispatchTime = dispatchTime;
+
         await order.save();
 
-        // Send email to user
-        const deliveredItems = order.orderItems.filter(
-          (item) => item.createdBy.toString() === brandUserId
-        );
+        // Rest of your email sending logic here
 
-        if (deliveredItems.length > 0) {
-          const emailContent = createEmailContentForDeliveredItems(order, deliveredItems, order.brandDeliveries[brandDeliveryIndex]);
-          sendEmail(
-            order.user.email,
-            "Your Order Has Been Delivered",
-            emailContent
-          )
-          .then(response => {
-            console.log('Email sent:', response.body);
-          })
-          .catch(err => {
-            console.error('Error sending email:', err.statusCode);
-          });
-        }
-
-        res.send({ message: 'Delivery Updated' });
+        res.send({ message: 'Delivery Updated', dispatchTime: dispatchTime });
       } else {
         res.status(404).send({ message: 'Brand Delivery Not Found' });
       }
@@ -847,6 +870,7 @@ orderRouter.put(
 );
 
 
+
 orderRouter.put(
   '/:id/pay',
   isAuth,
@@ -854,6 +878,7 @@ orderRouter.put(
     const order = await Order.findById(req.params.id).populate('user', 'email name');
     if (order) {
       order.isPaid = true;
+      order.paymentMethod = 'paypal' // e.g., 'card'
       order.paidAt = Date.now();
       order.paymentResult = {
         id: req.body.id,
@@ -902,7 +927,63 @@ orderRouter.put(
   })
 );
 
+// orderRouter.post('/payment-intent', async (req, res) => {
+//   const { amount, currency, paymentMethodType } = req.body;
 
+//   const paymentIntent = await stripe.paymentIntents.create({
+//     amount: amount,
+//     currency: currency,
+//     payment_method_types: [paymentMethodType], // 'afterpay_clearpay'
+//     // Additional options if needed
+//   });
+
+//   res.send({ clientSecret: paymentIntent.client_secret });
+// });
+
+
+orderRouter.put(
+  '/:id/stripe-pay',
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id).populate('user', 'email name');
+    
+    if (order) {
+      const { paymentMethodID,paymentmethod,createdtime } = req.body; // Contains Stripe payment method details
+      console.log('Request Body:', req.body); 
+
+      order.isPaid = true;
+      order.paidAt = Date.now();
+      order.paymentMethod = paymentmethod; // e.g., 'card'
+      order.paymentResult = {
+        id: paymentMethodID, // Stripe payment method ID
+        status: 'COMPLETED', // You may adjust based on your Stripe payment status
+        update_time: new Date().toISOString(),
+        email_address: order.user.email, // Assuming you have user's email in the order
+      };
+
+      // ... additional order processing logic ...
+
+      const updatedOrder = await order.save();
+
+      // Send confirmation email
+      sendEmail(
+        order.user.email,
+        `Order Confirmation ${order._id}`,
+        payOrderEmailTemplate(order)
+      )
+      .then(response => {
+        console.log('Email sent:', response.body);
+      })
+      .catch(err => {
+        console.error('Error sending email:', err.statusCode);
+      });
+
+      res.send({ message: 'Order Paid', order: updatedOrder });
+    } else {
+      res.status(404).send({ message: 'Order Not Found' });
+    }
+  })
+);
 
 
 

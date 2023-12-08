@@ -54,11 +54,13 @@ export default function DashboardScreen() {
     fetchData();
   }, [userInfo]);
 
-  const formatDispatchTime = (totalMinutes) => {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${hours} hours, ${minutes} mins`;
+const formatDispatchTime = (minutes) => {
+  if (isNaN(minutes)) return 'N/A';
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
+  return `${hours}h ${mins}m`;
 };
+
 
 return (
     <div className="dashboard-container">
@@ -88,22 +90,29 @@ return (
             { title: 'Sales', amount: `$${summary.orders ? summary.orders.totalSales.toFixed(2) : 0}`, icon: 'fas fa-dollar-sign',
           description: 'Sum of total sales'  },
 
-            {
-              title: 'Dispatch Time',
-              amount: userInfo.isAdmin ? (
-                Array.isArray(summary.brandDispatchSummary) ?
-                  formatDispatchTime(summary.brandDispatchSummary.reduce((acc, cur) => acc + cur.average, 0) / summary.brandDispatchSummary.length || 0) :
-                  'N/A' // Fallback if not an array
-              ) : (
-                typeof summary.brandDispatchSummary === 'object' ?
-                  formatDispatchTime(summary.brandDispatchSummary[userInfo._id]?.average || 0) :
-                  'N/A' // Fallback if not an object or undefined
-              ),
-              icon: 'fas fa-truck',
-              description: 'Average time between payment and shipment'
-            }
-
-
+           {
+  title: 'Dispatch Time',
+  amount: userInfo.isAdmin ? (
+    Array.isArray(summary.brandDispatchSummary) ?
+      formatDispatchTime(
+        parseFloat(
+          (Object.values(summary.brandDispatchSummary).reduce((acc, cur) => acc + cur, 0) /
+          Object.keys(summary.brandDispatchSummary).length).toFixed(2)
+        )
+      ) :
+      'N/A' // Fallback if not an array
+  ) : (
+    typeof summary.brandDispatchSummary === 'object' ?
+      formatDispatchTime(
+        parseFloat(
+          (summary.brandDispatchSummary[userInfo._id] || 0).toFixed(2)
+        )
+      ) :
+      'N/A' // Fallback if not an object or undefined
+  ),
+  icon: 'fas fa-truck',
+  description: 'Average time between payment and shipment'
+}
           ].map((card, index) => (
                  <Col xs={12} sm={6} md={4} lg={3} xl={2} key={index}>
                   <Card className="dashboard-card" title={card.description}> {/* Add title here */}

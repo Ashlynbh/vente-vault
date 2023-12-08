@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+
 const brandDeliverySchema = new mongoose.Schema({
   brand: {
     type: mongoose.Schema.Types.ObjectId,
@@ -10,7 +11,9 @@ const brandDeliverySchema = new mongoose.Schema({
   deliveredAt: { type: Date },
   trackingNumber: { type: String }, // Tracking number for the shipment
   brandName: { type: String },
+  dispatchTime: { type: Number, default: 0 }, // Add the dispatchTime field directly
 });
+
 
 
 const orderSchema = new mongoose.Schema(

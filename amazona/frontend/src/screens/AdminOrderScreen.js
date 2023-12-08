@@ -216,11 +216,8 @@ function onError(err) {
   ]);
 
   const [trackingNumber, setTrackingNumber] = useState('');
-
-  async function deliverOrderHandler() {
-
   
-
+async function deliverOrderHandler() {
   // Basic validation for tracking number
   if (!trackingNumber) {
     toast.error("Tracking number is required");
@@ -233,12 +230,14 @@ function onError(err) {
       `/api/orders/${order._id}/deliver`,
       {
         brandUserId: userInfo._id, // Automatically use the logged-in user's ID
-        trackingNumber
+        trackingNumber,
       },
       {
         headers: { authorization: `Bearer ${userInfo.token}` },
       }
     );
+
+
     dispatch({ type: 'DELIVER_SUCCESS', payload: data });
     toast.success('Order delivery updated');
   } catch (err) {
@@ -246,6 +245,32 @@ function onError(err) {
     dispatch({ type: 'DELIVER_FAIL' });
   }
 }
+
+// Helper function to format the ISO date string
+const formatDateAndTime = (isoString) => {
+  const date = new Date(isoString);
+  return `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+};
+
+const [googleApiKey, setGoogleApiKey] = useState('');
+
+useEffect(() => {
+  const fetchApiKey = async () => {
+    try {
+      const { data } = await axios.get('/api/keys/google', {
+        headers: { Authorization: `BEARER ${userInfo.token}` },
+      });
+      setGoogleApiKey(data.key);
+    } catch (error) {
+      console.error('Error fetching Google API key:', error);
+      // Handle error appropriately
+    }
+  };
+
+  if (userInfo) {
+    fetchApiKey();
+  }
+}, [userInfo]);
 
     
  
@@ -267,19 +292,17 @@ function onError(err) {
               <Card.Title>Shipping</Card.Title>
               <Card.Text>
                 <strong>Name:</strong> {order.shippingAddress.fullName} <br />
-                <strong>Address: </strong> {order.shippingAddress.address},
-                {order.shippingAddress.city}, {order.shippingAddress.postalCode}
-                ,{order.shippingAddress.country}
-                &nbsp;
-                {order.shippingAddress.location &&
-                  order.shippingAddress.location.lat && (
-                    <a
-                      target="_new"
-                      href={`https://maps.google.com?q=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}`}
-                    >
-                      Show On Map
-                    </a>
-                  )}
+                    <strong>Address: </strong> {order.shippingAddress.address},
+                    {order.shippingAddress.city}, {order.shippingAddress.postalCode},
+                    {order.shippingAddress.country}
+                    {order.shippingAddress.location && order.shippingAddress.location.lat && (
+                      <div>
+                        <img
+                         src={`https://maps.googleapis.com/maps/api/staticmap?center=${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}&zoom=13&size=600x300&maptype=roadmap&markers=color:red%7Clabel:S%7C${order.shippingAddress.location.lat},${order.shippingAddress.location.lng}&key=${googleApiKey}`}
+                         alt="Shipping Location"
+                        />
+                      </div>
+                    )}
               </Card.Text>
               {order.brandDeliveries && order.brandDeliveries.length > 0 && (
                 order.brandDeliveries.map((brandDelivery) => {
@@ -323,7 +346,7 @@ function onError(err) {
               </Card.Text>
               {order.isPaid ? (
                 <MessageBox variant="success">
-                  Paid at {order.paidAt}
+                   Paid at {formatDateAndTime(order.paidAt)}
                 </MessageBox>
               ) : (
                 <MessageBox variant="danger">Not Paid</MessageBox>
