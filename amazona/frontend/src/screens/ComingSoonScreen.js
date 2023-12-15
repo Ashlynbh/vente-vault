@@ -4,6 +4,10 @@ import Button from 'react-bootstrap/Button';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { getError } from '../utils';
+import { Modal } from 'react-bootstrap';
+import { FaLongArrowAltRight } from 'react-icons/fa';
+
+
 
 
 
@@ -17,6 +21,9 @@ const BrandExpressionOfInterestScreen = () => {
   const [website, setWebsite] = useState('');
   const [message, setMessage] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState('');
+  const [subscriberEmail, setSubscriberEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
 
   const pageStyles = {
     margin: 0,
@@ -24,6 +31,36 @@ const BrandExpressionOfInterestScreen = () => {
     height: '100vh',
     backgroundColor: 'whitesmoke',
   };
+
+const handleSubscriptionSubmit = async (event) => {
+  event.preventDefault();
+  try {
+    const response = await fetch('/api/users/mailjet/add-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: subscriberEmail })
+    });
+    const data = await response.json();
+
+    if (response.status === 400 && data.message.includes('already exists')) {
+      // Handle the specific "email already exists" error
+      toast.error("This email is already subscribed.");
+    } else if (data.success) {
+      // Handle successful subscription
+      toast.success('Thank you for subscribing!');
+      setSubscriberEmail('');
+      setIsSubscribed(true);
+    } else {
+      // Handle other errors
+      toast.error(data.message);
+    }
+  } catch (error) {
+    console.error("There was an error adding the email.", error);
+    toast.error('Oops! Something went wrong.');
+  }
+};
+
+
 
   const submitHandler = async (event) => {
     event.preventDefault();
@@ -132,10 +169,35 @@ const BrandExpressionOfInterestScreen = () => {
           />
         </Form.Group>
  {submissionStatus && <div className="submission-status-message">{submissionStatus}</div>}
-        <Button className="sign-in-button" variant="primary" type="submit">
+        <Button className="coming-soon-btn" variant="primary" type="submit">
           Submit
         </Button>
       </Form>
+      <div className="subscribe-section">
+         <p className="comingsoon-subheader">
+          {isSubscribed ? "Thank you for subscribing!" : "Not a brand? Subscribe to our mailing list"}
+        </p>
+        <Form onSubmit={handleSubscriptionSubmit} className="subscribe-form">
+          <div className="d-flex align-items-center">
+            <Form.Group controlId="subscriberEmail" className="flex-grow-1 mr-2">
+              <Form.Control
+                type="email"
+                placeholder="EMAIL"
+                value={subscriberEmail}
+                onChange={(e) => setSubscriberEmail(e.target.value)}
+                required
+                style={{ width: '100%' }} // or any specific width
+              />
+            </Form.Group>
+            <Button variant="link" type="submit" className="submit-arrow-button">
+               <FaLongArrowAltRight style={{ color: 'grey', transform: 'scaleX(2) scaleY(1.2)' }} />
+            </Button>
+          </div>
+        </Form>
+      </div>
+
+
+
     </div>
     </div>
         

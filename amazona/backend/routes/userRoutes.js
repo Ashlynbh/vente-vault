@@ -154,21 +154,8 @@ userRouter.post('/mailjet/add-email', async (req, res) => {
     }
 
     try {
-        const mailjet = await initializeMailjet(); // Initialize the Mailjet client
-        const LIST_ID = '10318678'; // Replace with your actual Mailjet list ID
-
-        // Save the email to Mailjet contacts
-        await mailjet.post('contact', { version: 'v3' }).request({
-            Email: email,
-            Name: email.split('@')[0],
-        });
-
-        // Add the contact to a specific list
-        await mailjet.post('listrecipient', { version: 'v3' }).request({
-            ContactAlt: email,
-            ListID: LIST_ID,
-            IsActive: true
-        });
+        const mailjet = await initializeMailjet();
+        const LIST_ID = '10318678'; // Your Mailjet list ID
 
         // Attempt to save the email to Mailjet contacts
         try {
@@ -178,12 +165,19 @@ userRouter.post('/mailjet/add-email', async (req, res) => {
             });
         } catch (err) {
             if (err.ErrorMessage.includes('already exists')) {
-                // Specific handling for email already subscribed
+                // Handle email already subscribed
                 return res.status(400).json({ success: false, message: 'Email already subscribed.' });
             }
-            throw err; // Rethrow the error if it's not the 'already exists' error
+            throw err;
         }
-        
+
+        // Add the contact to a specific list
+        await mailjet.post('listrecipient', { version: 'v3' }).request({
+            ContactAlt: email,
+            ListID: LIST_ID,
+            IsActive: true
+        });
+
         // Send the welcome email and log the response
         const sendResponse = await mailjet.post('send', { version: 'v3.1' }).request({
             Messages: [

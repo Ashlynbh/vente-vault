@@ -17,6 +17,26 @@
  }
 
 /* ///////COMING SOON ////// */
+.coming-soon-btn {
+  margin-top: 10px;
+  cursor: pointer;
+  margin-top: 5px;
+  cursor: pointer;
+  color: white !important;
+  background-color: var(--accent-colour_navy) !important;
+  font-family: var(--body-font);
+  text-transform: uppercase;
+  font-size: 12px;
+  height: 30px;
+  width: 40%;
+  margin-bottom: 2%;
+  border-radius: 0;
+}
+
+
+.submit-arrow-button{
+  margin-right: 10%;
+}
 
 .coming-soon-overlay {
   position: fixed;
@@ -92,36 +112,6 @@
 
 .form-container {
   flex: 2;
-}
-
-/* Media query for mobile devices */
-@media (max-width: 768px) {
-
-  .comingsoon-image-container {
-      display:none;
-    }
-
-  .comingsoon-description {
-    font-size: 10px;
-
-  }
-
-  .central-content {
-    flex-direction: column;
-
-  }
-
-  .comingsoon-image-container,
-  .brand-signup-form-container {
-    width: 100%;
-    /* Full width on smaller screens */
-    margin: 0;
-    /* Adjust margin as needed */
-    padding: 0;
-    /* Adjust padding as needed */
-  }
-
-  /* Additional mobile-specific styles if needed */
 }
 
 
@@ -2393,6 +2383,10 @@ footer {
     max-width: 200px;
 
   }
+
+  .comingsoon-image-container {
+    display: none;
+  }
   .thumbnail {
     width: 70px;
     height: 90px
@@ -2576,6 +2570,31 @@ footer {
 
 /* Styles for screens of 768px width and below */
 @media (max-width: 768px) {
+
+
+  .comingsoon-image-container {
+      display: none;
+    }
+  
+    .comingsoon-description {
+      font-size: 10px;
+  
+    }
+  
+    .central-content {
+      flex-direction: column;
+  
+    }
+  
+    .comingsoon-image-container,
+    .brand-signup-form-container {
+      width: 100%;
+      /* Full width on smaller screens */
+      margin: 0;
+      /* Adjust margin as needed */
+      padding: 0;
+      /* Adjust padding as needed */
+    }
   .filters {
     display: none;
     
