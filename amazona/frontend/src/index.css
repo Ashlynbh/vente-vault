@@ -511,19 +511,23 @@ main {
   justify-content: space-between;
   margin-top: 6%;
   padding: 0 20px;
-
+  align-items: stretch;
+  /* Ensure boxes stretch to fill the container */
 }
 
 .info-box {
-  flex-grow: 1;
+  flex: 1;
+  /* Each box will take up equal space */
   text-align: center;
   padding: 20px;
   margin: 10px;
+  box-sizing: border-box;
+  /* Include padding and border in the width */
   box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
   background-color: var(--highlight-colour);
-
+  min-width: 0;
+  /* Prevents the box from overflowing its flex container */
 }
-
 
 .info-box p {
   margin: 0;
@@ -2738,6 +2742,10 @@ footer {
 
   .comingsoon-image-container {
       display: none;
+    }
+
+    .info-box p {
+      font-size: 14px;
     }
   
     .comingsoon-description {
