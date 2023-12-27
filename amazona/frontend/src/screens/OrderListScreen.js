@@ -8,6 +8,8 @@ import LoadingBox from '../components/LoadingBox';
 import MessageBox from '../components/MessageBox';
 import { Store } from '../Store';
 import { getError } from '../utils';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 
 
@@ -18,9 +20,11 @@ const reducer = (state, action) => {
     case 'FETCH_SUCCESS':
       return {
         ...state,
-        orders: action.payload,
+        orders: action.payload.orders, // Extract orders array from payload
+        pages: action.payload.pages, // Extract total pages count from payload
         loading: false,
       };
+
     case 'FETCH_FAIL':
       return { ...state, loading: false, error: action.payload };
     case 'DELETE_REQUEST':
@@ -35,6 +39,9 @@ const reducer = (state, action) => {
       return { ...state, loadingDelete: false };
     case 'DELETE_RESET':
       return { ...state, loadingDelete: false, successDelete: false };
+      case 'SET_PAGE':
+  return { ...state, page: action.payload };
+
     default:
       return state;
   }
@@ -42,34 +49,38 @@ const reducer = (state, action) => {
 export default function OrderListScreen() {
   const navigate = useNavigate();
   const { state } = useContext(Store);
+  const ordersPerPage = 10; 
   const { userInfo } = state;
-  const [{ loading, error, orders, loadingDelete, successDelete }, dispatch] =
-    useReducer(reducer, {
-      loading: true,
-      error: '',
-    });
+  const [{ loading, error, orders, loadingDelete, successDelete, page, pages }, dispatch] = 
+  useReducer(reducer, {
+    loading: true,
+    error: '',
+    orders: [],
+    page: 1,
+    pages: 1,
+    ordersPerPage: 10,
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/orders`, {
-          headers: { Authorization: `Bearer ${userInfo.token}` },
-        });
-        dispatch({ type: 'FETCH_SUCCESS', payload: data });
-      } catch (err) {
-        dispatch({
-          type: 'FETCH_FAIL',
-          payload: getError(err),
-        });
-      }
-    };
-    if (successDelete) {
-      dispatch({ type: 'DELETE_RESET' });
-    } else {
-      fetchData();
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      dispatch({ type: 'FETCH_REQUEST' });
+      const { data } = await axios.get(`/api/orders?page=${page}&limit=${ordersPerPage}`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      dispatch({ type: 'FETCH_SUCCESS', payload: data });
+    } catch (err) {
+      dispatch({
+        type: 'FETCH_FAIL',
+        payload: getError(err),
+      });
     }
-  }, [userInfo, successDelete]);
+  };
+
+  fetchData();
+}, [userInfo, successDelete, page]); // Include 'page' in the dependency array
+
 
   // Convert to CSV
     const convertToCSV = (orders) => {
@@ -162,7 +173,7 @@ const getDeliveryStatusForAdmin = (order) => {
         <MessageBox variant="danger">{error}</MessageBox>
       ) : (
         <div className="table-container"> {/* Container for the table with padding */}
-        <table className="table table-striped"> {/* Striped table for alternating row colors */}
+        <table className="table"> {/* Striped table for alternating row colors */}
           <thead>
             <tr>
               <th>ID</th>
@@ -203,7 +214,7 @@ const getDeliveryStatusForAdmin = (order) => {
             variant="light"
             onClick={() => navigate(`/order/admin/${order._id}`)}
           >
-            Details
+            <FontAwesomeIcon icon={faInfoCircle} /> {/* Icon for Details */}
           </Button>
           &nbsp;
           {userInfo.isAdmin && (
@@ -213,7 +224,7 @@ const getDeliveryStatusForAdmin = (order) => {
               variant="light"
               onClick={() => deleteHandler(order)}
             >
-              Delete
+              <FontAwesomeIcon icon={faTrash} /> {/* Icon for Delete */}
             </Button>
           )}
         </td>
@@ -221,7 +232,21 @@ const getDeliveryStatusForAdmin = (order) => {
     );
   })}
 </tbody>
+
         </table>
+      <div className="pagination-container">
+        {[...Array(pages).keys()].map(x => (
+          <Button 
+            key={x + 1} 
+            variant={x + 1 === page ? 'primary' : 'light'}
+            className={x + 1 === page ? 'active' : ''} // Apply 'active' class for the current page
+            onClick={() => dispatch({ type: 'SET_PAGE', payload: x + 1 })}
+          >
+            {x + 1}
+          </Button>
+        ))}
+      </div>
+
         <Button className="csv-button" variant="primary" onClick={downloadCSV}>Export as CSV</Button>
       </div>
       

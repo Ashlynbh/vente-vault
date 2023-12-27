@@ -9,6 +9,9 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import { toast } from 'react-toastify';
 import { getError } from '../utils';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -168,7 +171,7 @@ export default function ProductListScreen() {
       ) : (
         <>
           <div className="table-container"> {/* Container for the table with padding */}
-            <table className="table table-striped"> {/* Striped table for alternating row colors */}
+            <table className="table"> {/* Striped table for alternating row colors */}
               <thead>
                 <tr>
                   <th>ID</th>
@@ -184,7 +187,7 @@ export default function ProductListScreen() {
                   <tr key={product._id}>
                     <td>{product._id}</td>
                     <td>{product.name}</td>
-                    <td>{product.price}</td>
+                    <td>{product.reducedPrice}</td>
                     <td>{product.category}</td>
                     <td>{product.brand}</td>
                     <td>
@@ -193,7 +196,7 @@ export default function ProductListScreen() {
                         variant="light"
                         onClick={() => navigate(`/admin/product/${product._id}`)}
                       >
-                        Edit
+                        <FontAwesomeIcon icon={faEdit} />
                       </Button>
                       &nbsp;
                       <Button
@@ -201,18 +204,17 @@ export default function ProductListScreen() {
                         variant="light"
                         onClick={() => deleteHandler(product)}
                       >
-                        Delete
+                        <FontAwesomeIcon icon={faTrash} />
                       </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-          <div className="pagination-container"> {/* Container for pagination links */}
+            <div className="pagination-container">
             {[...Array(pages).keys()].map((x) => (
               <Link
-                className={x + 1 === Number(page) ? 'pagination-link active' : 'pagination-link'}
+                className={`pagination-link ${x + 1 === Number(page) ? 'active' : ''}`}
                 key={x + 1}
                 to={`/admin/products?page=${x + 1}`}
               >
@@ -220,6 +222,9 @@ export default function ProductListScreen() {
               </Link>
             ))}
           </div>
+          </div>
+          
+
         </>
 
       )}

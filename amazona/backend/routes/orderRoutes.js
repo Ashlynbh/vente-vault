@@ -70,25 +70,38 @@ orderRouter.get(
   isAuth,
   isAdminOrBrand,
   expressAsyncHandler(async (req, res) => {
-    let orders;
+    const page = parseInt(req.query.page) || 1; // Current page number, default is 1
+    const limit = parseInt(req.query.limit) || 10; // Number of orders per page, default is 10
+    const skip = (page - 1) * limit; // Number of orders to skip for pagination
+
+    let query, totalOrdersCount;
+    let productIdsArray = []; // Declare productIdsArray outside the if block
+
     if (req.user.isBrand && !req.user.isAdmin) {
-      // Get orders that contain products created by this brand
       const productIds = await Product.find({ createdBy: req.user._id }, '_id');
-      const productIdsArray = productIds.map(product => product._id);
-      orders = await Order.find({ 'orderItems.product': { $in: productIdsArray } }).populate('user', 'name');
-      
-      // Filter out the items not created by the brand
-      orders = orders.map(order => ({
-        ...order._doc,
-        orderItems: order.orderItems.filter(item => 
-          productIdsArray.includes(item.product.toString())
-        )
-      }));
+      productIdsArray = productIds.map(product => product._id);
+
+      query = Order.find({ 'orderItems.product': { $in: productIdsArray } }).populate('user', 'name');
+      totalOrdersCount = await Order.countDocuments({ 'orderItems.product': { $in: productIdsArray } });
     } else {
-      // Admin gets all orders
-      orders = await Order.find().populate('user', 'name');
+      query = Order.find().populate('user', 'name');
+      totalOrdersCount = await Order.countDocuments();
     }
-    res.send(orders);
+
+    const orders = await query.skip(skip).limit(limit);
+
+    const processedOrders = req.user.isBrand && !req.user.isAdmin 
+      ? orders.map(order => ({
+          ...order._doc,
+          orderItems: order.orderItems.filter(item => 
+            productIdsArray.includes(item.product.toString())
+          )
+        }))
+      : orders;
+
+    const pages = Math.ceil(totalOrdersCount / limit); // Calculate total pages
+
+    res.send({ orders: processedOrders, pages });
   })
 );
 
@@ -201,7 +214,6 @@ const usersSummary = await Order.aggregate([
   }
 ]);
 
-console.log(usersSummary);
 
 
 
@@ -295,11 +307,11 @@ const bottomProducts = await Order.aggregate([
 
 // Manually sort and log the top products
 const sortedTopProducts = topProducts.sort((a, b) => b.totalSales - a.totalSales);
-console.log('Top Products:', sortedTopProducts);
+
 
 // Manually sort and log the bottom products
 const sortedBottomProducts = bottomProducts.sort((a, b) => a.totalSales - b.totalSales);
-console.log('Bottom Products:', sortedBottomProducts);
+
 
 
 
@@ -353,8 +365,6 @@ console.log('Bottom Products:', sortedBottomProducts);
       : 0;
   }
 
-  // Console log the result for debugging
-  console.log("Paid Not Delivered Orders Count:", paidNotDeliveredOrdersCount);
 
 
 
@@ -422,8 +432,23 @@ orderRouter.get(
   '/mine',
   isAuth,
   expressAsyncHandler(async (req, res) => {
-    const orders = await Order.find({ user: req.user._id });
-    res.send(orders);
+    const page = parseInt(req.query.page) || 1; // Get the current page number from query, default to 1
+    const limit = parseInt(req.query.limit) || 10; // Get the limit of orders per page, default to 10
+    const skip = (page - 1) * limit; // Calculate the number of orders to skip
+
+    // Get the total number of orders for the user
+    const totalOrders = await Order.countDocuments({ user: req.user._id });
+
+    // Fetch a subset of orders based on page and limit
+    const orders = await Order.find({ user: req.user._id })
+                              .skip(skip)
+                              .limit(limit);
+
+    // Calculate the total number of pages
+    const pages = Math.ceil(totalOrders / limit);
+
+    // Send the paginated orders and total page count
+    res.send({ orders, pages });
   })
 );
 

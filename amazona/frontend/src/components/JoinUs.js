@@ -29,7 +29,7 @@ const handleEmailSubmit = async (e) => {
 
     return (
         <section className="join-us-section">
-            <h2>Join our mailing list to receive information on exclusive deals</h2>
+            <h2>Join us to receive information on exclusive deals</h2>
             <form onSubmit={handleEmailSubmit}>
                 <input 
                     type="email" 

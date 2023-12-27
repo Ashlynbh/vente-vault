@@ -13,6 +13,8 @@ import { useContext, useEffect, useReducer, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Slider from 'react-slick';
+import Modal from 'react-bootstrap/Modal';
+
 
 
 
@@ -56,6 +58,12 @@ function ProductScreen(){
     const [availableSizes, setAvailableSizes] = useState({});
     const [isProductOutOfStock, setIsProductOutOfStock] = useState(false);
     const [hasScrolled, setHasScrolled] = useState(false);
+    const [showSizeGuide, setShowSizeGuide] = useState(false);
+
+    const toggleSizeGuideModal = () => {
+      setShowSizeGuide(!showSizeGuide);
+    };
+
 
 
     function SampleNextArrow(props) {
@@ -434,6 +442,18 @@ useEffect(() => {
                         );
                       })}
                     </div>
+                     {/* Size Guide Button */}
+                    <button className="size-guide-btn" onClick={toggleSizeGuideModal}>
+                      Size Guide
+                    </button>
+                    <Modal show={showSizeGuide} onHide={toggleSizeGuideModal}>
+                      <Modal.Header closeButton>
+                      </Modal.Header>
+                      <Modal.Body>
+                        <img src={product.sizeguide} alt="Size Guide" style={{ width: '100%' }} />
+                      </Modal.Body>
+                    </Modal>
+
                   </ListGroup.Item>
                 )}            
              <ListGroup.Item>
@@ -454,29 +474,36 @@ useEffect(() => {
                   {learnMoreVisible ? 'Learn Less' : 'Learn More'}
                 </Button>
               </ListGroup.Item>
-              {learnMoreVisible && ( // Conditional rendering based on the state
-            <ListGroup.Item>
-              <div className="product-extra-info">
-                <h4>Model's Details</h4>
-                <p>Our model is wearing a size {product.sizeOfModelsGarment}</p>
-                <p>Measurements: Chest: {product.modelBodyMeasurements.chest}, Waist: {product.modelBodyMeasurements.waist}, Hips: {product.modelBodyMeasurements.hips}, Height: {product.modelBodyMeasurements.height}</p>
+            {learnMoreVisible && (
+  <ListGroup.Item>
+    <div className="product-extra-info">
+      <h4>Model's Details</h4>
+      <p>Our model is wearing a size {product.sizeOfModelsGarment}</p>
+      <p>Measurements: Chest: {product.modelBodyMeasurements.chest}", Waist: {product.modelBodyMeasurements.waist}", Hips: {product.modelBodyMeasurements.hips}", Height: {product.modelBodyMeasurements.height}cm</p>
 
-                <h4>Material</h4>
-                {product.fabricMaterial.map((material, index) => (
-                  <p key={index}>{material.percentage}% {material.material}</p>
-                ))}
+      <h4>Material</h4>
+      {product.fabricMaterial.map((material, index) => (
+        <p key={index}>{material.percentage}% {material.material}</p>
+      ))}
 
-                <h4>Clothing Measurements</h4>
-                {product.measurements.chest && <p>Chest: {product.measurements.chest}</p>}
-                {product.measurements.waist && <p>Waist: {product.measurements.waist}</p>}
-                {product.measurements.hips && <p>Hips: {product.measurements.hips}</p>}
-                <p>Garment Length: {product.garmentLength}</p>
+      {product.measurements && (
+        (product.measurements.chest || product.measurements.waist || product.measurements.hips) && (
+          <div>
+            <h4>Clothing Measurements</h4>
+            {product.measurements.chest && <p>Chest: {product.measurements.chest}"</p>}
+            {product.measurements.waist && <p>Waist: {product.measurements.waist}"</p>}
+            {product.measurements.hips && <p>Hips: {product.measurements.hips}"</p>}
+            <p>Garment Length: {product.garmentLength}</p>
+          </div>
+        )
+      )}
 
-                <h4>Delivery</h4>
-                <p>This item is sent directly from our partner and will arrive separately if ordered with other items.</p>
-              </div>
-            </ListGroup.Item>
-          )}
+      <h4>Delivery</h4>
+      <p>This item is sent directly from our partner and will arrive separately if ordered with other items.</p>
+    </div>
+  </ListGroup.Item>
+)}
+
             </ListGroup>
           </Col>
           

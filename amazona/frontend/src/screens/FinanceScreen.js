@@ -94,7 +94,7 @@ const FinanceScreen = () => {
 
   return (
     <div className="table-container">
-      <table className="table table-striped" style={{ marginTop: '6%' }}>
+      <table className="table" style={{ marginTop: '6%' }}>
         <thead>
           <tr>
             <th>INVOICE ID</th>

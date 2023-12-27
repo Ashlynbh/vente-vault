@@ -64,13 +64,14 @@ export default function ProfileScreen() {
   return (
     <div className="sign-in-container">
       <Helmet>
-        <title>User Profile</title>
+        <title >User Profile</title>
       </Helmet>
-      <h1 className="my-3">User Profile</h1>
+      <h1  className="admin-profile">User Profile</h1>
       <form onSubmit={submitHandler}>
         <Form.Group className="mb-3" controlId="name">
           <Form.Label>Name</Form.Label>
           <Form.Control
+            className="profile-form"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -79,6 +80,7 @@ export default function ProfileScreen() {
         <Form.Group className="mb-3" controlId="name">
           <Form.Label>Email</Form.Label>
           <Form.Control
+          className="profile-form"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -88,6 +90,7 @@ export default function ProfileScreen() {
         <Form.Group className="mb-3" controlId="password">
           <Form.Label>Password</Form.Label>
           <Form.Control
+            className="profile-form"
             type="password"
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -95,6 +98,7 @@ export default function ProfileScreen() {
         <Form.Group className="mb-3" controlId="password">
           <Form.Label>Confirm Password</Form.Label>
           <Form.Control
+            className="profile-form"
             type="password"
             onChange={(e) => setConfirmPassword(e.target.value)}
           />

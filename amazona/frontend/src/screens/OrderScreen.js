@@ -398,7 +398,6 @@ const formatDateAndTime = (isoString) => {
                 <Card.Body>
                   <Card.Title>Payment</Card.Title>
                   <Card.Text>
-                    <strong>Method:</strong> {order.paymentMethod}
                   </Card.Text>
                   {order.isPaid ? (
                     <MessageBox variant="success">

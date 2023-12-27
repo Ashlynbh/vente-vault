@@ -8,6 +8,9 @@ import { getError } from '../utils';
 import { useNavigate } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import { toast } from 'react-toastify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrash, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -16,9 +19,12 @@ const reducer = (state, action) => {
     case 'FETCH_SUCCESS':
       return {
         ...state,
-        users: action.payload,
+        users: action.payload.users, 
+        pages: action.payload.pages, 
         loading: false,
       };
+    case 'SET_PAGE':
+      return { ...state, page: action.payload };
     case 'FETCH_FAIL':
       return { ...state, loading: false, error: action.payload };
         case 'DELETE_REQUEST':
@@ -40,11 +46,16 @@ const reducer = (state, action) => {
 };
 export default function UserListScreen() {
   const navigate = useNavigate();
-  const [{ loading, error, users, loadingDelete, successDelete }, dispatch] = useReducer(reducer, {
+  const [{ loading, error, users, pages, loadingDelete, successDelete, page, ordersPerPage }, dispatch] = useReducer(reducer, {
     loading: true,
     error: '',
     users: [],
+    pages: 0,
+    page: 1,
+    ordersPerPage: 10, // Define how many users you want per page
   });
+
+
 
   const { state } = useContext(Store);
   const { userInfo } = state;
@@ -70,12 +81,12 @@ export default function UserListScreen() {
     }
   }, [users, brandFilter, approvalFilter]);
 
-  // Fetch data logic
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/users`, {
+        const { data } = await axios.get(`/api/users?page=${page}&limit=${ordersPerPage}`, {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         });
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
@@ -83,12 +94,14 @@ export default function UserListScreen() {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
       }
     };
+
     if (successDelete) {
       dispatch({ type: 'DELETE_RESET' });
     } else {
       fetchData();
     }
-  }, [userInfo, successDelete]);
+  }, [userInfo, successDelete, page]);
+
 
   // Delete handler
   const deleteHandler = async (user) => {
@@ -151,7 +164,7 @@ export default function UserListScreen() {
         <MessageBox variant="danger">{error}</MessageBox>
       ) : (
         <div className="table-container"> {/* Container for the table with padding */}
-          <table className="table table-striped"> {/* Striped table for alternating row colors */}
+          <table className="table"> {/* Striped table for alternating row colors */}
             <thead>
               <tr>
                 <th>ID</th>
@@ -179,7 +192,7 @@ export default function UserListScreen() {
                       variant="light"
                       onClick={() => navigate(`/admin/user/${user._id}`)}
                     >
-                      Edit
+                      <FontAwesomeIcon icon={faEdit} /> {/* Icon for Edit */}
                     </Button>
                     &nbsp;
                     <Button
@@ -188,24 +201,39 @@ export default function UserListScreen() {
                       variant="light"
                       onClick={() => deleteHandler(user)}
                     >
-                      Delete
+                      <FontAwesomeIcon icon={faTrash} /> {/* Icon for Delete */}
                     </Button>
-                     {/* Existing buttons */}
-                      {user.isBrand  && (
-                        <Button
-                        className='subscription-btn'
-                          type="button"
-                          variant="info"
-                          onClick={() => handleSendSubscriptionLink(user)}
-                        >
-                          Send Link
-                        </Button>
-                      )}
+                {/* Existing buttons */}
+                  {user.isBrand && (
+                    <Button
+                      className='table-btn'
+                      type="button"
+                      variant="light"
+                      onClick={() => handleSendSubscriptionLink(user)}
+                    >
+                      <FontAwesomeIcon icon={faEnvelope} /> {/* Only Email Icon */}
+                    </Button>
+                  )}
+
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div className="pagination-container">
+            {[...Array(pages).keys()].map(x => (
+              <Button 
+                key={x + 1} 
+                className={`pagination-link ${x + 1 === page ? 'active' : ''}`} // Changed to 'pagination-link'
+                onClick={() => dispatch({ type: 'SET_PAGE', payload: x + 1 })}
+              >
+                {x + 1}
+              </Button>
+            ))}
+          </div>
+
+
+
         </div>
 
       )}

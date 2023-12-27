@@ -92,15 +92,15 @@ return (
 
            {
   title: 'Dispatch Time',
-  amount: userInfo.isAdmin ? (
-    Array.isArray(summary.brandDispatchSummary) ?
-      formatDispatchTime(
-        parseFloat(
-          (Object.values(summary.brandDispatchSummary).reduce((acc, cur) => acc + cur, 0) /
-          Object.keys(summary.brandDispatchSummary).length).toFixed(2)
-        )
-      ) :
-      'N/A' // Fallback if not an array
+amount: userInfo.isAdmin ? (
+  typeof summary.brandDispatchSummary === 'object' ?
+    formatDispatchTime(
+      parseFloat(
+        (Object.values(summary.brandDispatchSummary).reduce((acc, cur) => acc + cur, 0) /
+        Object.keys(summary.brandDispatchSummary).length).toFixed(2)
+      )
+    ) :
+    'N/A' // Fallback if not an object
   ) : (
     typeof summary.brandDispatchSummary === 'object' ?
       formatDispatchTime(

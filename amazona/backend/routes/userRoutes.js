@@ -18,10 +18,19 @@ userRouter.get(
   isAuth,
   isAdmin,
   expressAsyncHandler(async (req, res) => {
-    const users = await User.find({});
-    res.send(users);
+    const page = parseInt(req.query.page) || 1;  // Current page number, default to 1
+    const limit = parseInt(req.query.limit) || 10;  // Number of users per page, default to 10
+    const skip = (page - 1) * limit;  // Calculate the number of documents to skip
+
+    const totalUsersCount = await User.countDocuments();  // Total count of users
+    const users = await User.find({}).skip(skip).limit(limit);  // Fetch subset of users
+
+    const pages = Math.ceil(totalUsersCount / limit);  // Total number of pages
+
+    res.send({ users, pages });
   })
 );
+
 
 userRouter.put(
   '/profile',
