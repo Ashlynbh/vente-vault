@@ -616,6 +616,28 @@ main {
   height:50vh;
 }
 
+.join-us-section form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.join-us-section input {
+  flex-grow: 1;
+  margin-right: 10px;
+  padding: 10px;
+  font-size: 16px;
+
+}
+
+.join-us-section button {
+  flex-shrink: 0;
+  padding: 10px 15px;
+  font-size: 16px;
+
+}
+
 .join-us-section h2 {
   margin-bottom: 20px;
   color: var(--accent-colour_cream);
@@ -2510,6 +2532,16 @@ footer {
     max-width: 200px;
 
   }
+
+    .custom-carousel-heading {
+      font-size: 55px;
+  
+    }
+  
+    .custom-carousel-text {
+      font-size: 40px;
+
+    }
 
     #brand-nav-dropdown {
       margin-left: 0px;

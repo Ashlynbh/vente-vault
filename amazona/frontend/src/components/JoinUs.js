@@ -28,19 +28,20 @@ const handleEmailSubmit = async (e) => {
 
 
     return (
-        <section className="join-us-section">
+            <section className="join-us-section">
             <h2>Join us to receive information on exclusive deals</h2>
-            <form onSubmit={handleEmailSubmit}>
+            <form onSubmit={handleEmailSubmit} className="email-form">
                 <input 
-                    type="email" 
-                    placeholder="Enter your email..." 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                type="email" 
+                placeholder="Enter your email..." 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 />
                 <button type="submit">→</button>
             </form>
-        </section>
+            </section>
+
     );
 };
 
