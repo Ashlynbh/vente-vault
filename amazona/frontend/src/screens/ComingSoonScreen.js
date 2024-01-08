@@ -22,7 +22,13 @@ const BrandExpressionOfInterestScreen = () => {
   const [message, setMessage] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState('');
   const [subscriberEmail, setSubscriberEmail] = useState('');
+  // At the beginning of your component
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSignedUp, setIsSignedUp] = useState(false);
+  const [emailExistsErrorTopForm, setEmailExistsErrorTopForm] = useState(false);
+  const [emailExistsErrorBottomForm, setEmailExistsErrorBottomForm] = useState(false);
+
+
 
 
   const pageStyles = {
@@ -34,6 +40,7 @@ const BrandExpressionOfInterestScreen = () => {
 
 const handleSubscriptionSubmit = async (event) => {
   event.preventDefault();
+  setEmailExistsErrorTopForm(false); // Reset the error state
   try {
     const response = await fetch('/api/users/mailjet/add-email', {
       method: 'POST',
@@ -43,15 +50,13 @@ const handleSubscriptionSubmit = async (event) => {
     const data = await response.json();
 
     if (response.status === 400 && data.message.includes('already exists')) {
-      // Handle the specific "email already exists" error
       toast.error("This email is already subscribed.");
+      setEmailExistsErrorTopForm(true);
     } else if (data.success) {
-      // Handle successful subscription
       toast.success('Thank you for subscribing!');
       setSubscriberEmail('');
       setIsSubscribed(true);
     } else {
-      // Handle other errors
       toast.error(data.message);
     }
   } catch (error) {
@@ -62,28 +67,41 @@ const handleSubscriptionSubmit = async (event) => {
 
 
 
-  const submitHandler = async (event) => {
-    event.preventDefault();
-    setSubmissionStatus(''); // Reset the status message
-    try {
-      // POST request to your API endpoint
-      const { data } = await axios.post('/api/users/expression-of-interest', {
-        brandName,
-        contactName,
-        email,
-        password,
-        website,
-        message,
-      });
-      toast.success(data.message);
-      setSubmissionStatus('Thank you! We will be in touch.');
-      // Here, you can also reset the form or navigate the user to another page
-    } catch (error) {
-      toast.error('There was an error with your submission.');
-      setSubmissionStatus('There was an error with your details, please try again.');
-      // Handle other types of errors, such as displaying a specific message
+
+const submitHandler = async (event) => {
+  event.preventDefault();
+  setSubmissionStatus(''); // Reset the status message
+  setEmailExistsErrorBottomForm(false); // Reset the error state
+  try {
+    const response = await axios.post('/api/users/expression-of-interest', {
+      brandName,
+      contactName,
+      email,
+      password,
+      website,
+      message,
+    });
+
+    if (response.data && response.data.success) {
+      toast.success(response.data.message);
+      setIsSignedUp(true);
+    } else if (response.data && !response.data.success && response.data.message.includes('already exists')) {
+      toast.error("This email is already signed up.");
+      setEmailExistsErrorBottomForm(true);
+    } else {
+      toast.error(response.data.message);
     }
-  };
+  } catch (error) {
+    console.error('There was an error with your submission.', error);
+    toast.error('Oops! Something went wrong.');
+    if (error.response && error.response.data && error.response.data.message.includes('already exists')) {
+      setEmailExistsErrorBottomForm(true);
+    } else {
+      setSubmissionStatus('There was an error with your details, please try again.');
+    }
+  }
+};
+
 
 
   return (
@@ -96,15 +114,56 @@ const handleSubscriptionSubmit = async (event) => {
 
       <div className="brand-signup-form-container">
         <h1 className="comingsoon-title">COMING SOON</h1>
-        <h2 className="comingsoon-subtitle">BRAND SIGN UP</h2>
+        <h2 className="sub-title">Customers</h2>
+      <p className="comingsoon-description">
+        Get Ready for Exclusive Fashion Deals! 🌟 Sign up now to stay in the loop about our launch and be the first to shop all things fashion at discount prices.
+      </p>
+      {isSubscribed && (
         <p className="comingsoon-description">
-      Welcome to our marketplace! 
-      We're excited that you're interested in selling your products with us. 
-      By signing up as a brand, you'll have the opportunity to showcase and sell your clothing to a wide audience.
-      Please fill out the form below to get started. Note that all brand sign-ups are subject to approval 
-      by our team. 
-      We look forward to partnering with you!
-    </p>
+          Thank you for subscribing!
+        </p>
+      )}
+    {emailExistsErrorTopForm && (
+      <p className="error-message">
+        This email already exists.
+      </p>
+    )}
+
+    <Form onSubmit={handleSubscriptionSubmit} className="subscribe-form">
+          <div className="d-flex align-items-center">
+            <Form.Group controlId="subscriberEmail" className="flex-grow-1 mr-2">
+              <Form.Control
+                type="email"
+                placeholder="EMAIL"
+                value={subscriberEmail}
+                onChange={(e) => setSubscriberEmail(e.target.value)}
+                required
+                style={{ width: '100%' }} // or any specific width
+              />
+            </Form.Group>
+        <Button className="coming-soon-btn" variant="primary" type="submit">
+          Notify me
+        </Button>
+          </div>
+        </Form>
+        {/* Horizontal Line to separate the two sections */}
+      <hr className="section-divider" />
+      <h2 className="sub-title">Brands</h2>
+      <p className="comingsoon-description">
+        Join the Fashion Revolution! 🚀 Are you a fashion brand with surplus stock? Express your interest now and sign up for our information pack. By signing up as a brand you will have the opportunity to showcase your brand to a wide audience that celebrates style.
+      </p>
+      {isSignedUp && (
+        <p className="comingsoon-description">
+          Thank you for signing up for Vente Vault! We will send you an information pack prior to launch.
+        </p>
+      )}
+      {emailExistsErrorBottomForm && (
+        <p className="comingsoon-description">
+          This email already exists.
+        </p>
+      )}
+
+
       <Form className="comingsoon-form" onSubmit={submitHandler}>
         <Form.Group className="mb-3" controlId="brandName">
           <Form.Control
@@ -156,46 +215,11 @@ const handleSubscriptionSubmit = async (event) => {
             onChange={(e) => setWebsite(e.target.value)}
           />
         </Form.Group>
-
-        <Form.Group className="mb-3" controlId="message">
-          <Form.Control
-            className="brand-form-control"
-            as="textarea"
-            rows={3}
-            placeholder="MESSAGE"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required
-          />
-        </Form.Group>
  {submissionStatus && <div className="submission-status-message">{submissionStatus}</div>}
         <Button className="coming-soon-btn" variant="primary" type="submit">
           Submit
         </Button>
       </Form>
-      <div className="subscribe-section">
-         <p className="comingsoon-subheader">
-          {isSubscribed ? "Thank you for subscribing!" : "Not a brand? Subscribe to our mailing list"}
-        </p>
-        <Form onSubmit={handleSubscriptionSubmit} className="subscribe-form">
-          <div className="d-flex align-items-center">
-            <Form.Group controlId="subscriberEmail" className="flex-grow-1 mr-2">
-              <Form.Control
-                type="email"
-                placeholder="EMAIL"
-                value={subscriberEmail}
-                onChange={(e) => setSubscriberEmail(e.target.value)}
-                required
-                style={{ width: '100%' }} // or any specific width
-              />
-            </Form.Group>
-            <Button variant="link" type="submit" className="submit-arrow-button">
-               <FaLongArrowAltRight style={{ color: 'grey', transform: 'scaleX(2) scaleY(1.2)' }} />
-            </Button>
-          </div>
-        </Form>
-      </div>
-
 
 
     </div>

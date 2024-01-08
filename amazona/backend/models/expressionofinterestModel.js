@@ -5,7 +5,6 @@ const expressionOfInterestSchema = new mongoose.Schema({
   contactName: { type: String, required: true },
   email: { type: String, required: true },
   website: { type: String, required: false },
-  message: { type: String, required: true },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
